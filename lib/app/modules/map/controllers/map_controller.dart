@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart' as flutter_map;
 import 'package:get/get.dart';
 import '../../../data/models/map_marker_model.dart';
 import '../../../services/api_service.dart';
@@ -6,6 +7,9 @@ import '../views/widgets/map_marker_sheet.dart';
 
 class MapController extends GetxController {
   final _api = Get.find<ApiService>();
+
+  /// Contrôleur flutter_map pour le zoom programmatique
+  final mapCtrl = flutter_map.MapController();
 
   final RxList<MapMarkerModel> markers = <MapMarkerModel>[].obs;
   final RxBool onlyAbus = false.obs;
@@ -40,8 +44,11 @@ class MapController extends GetxController {
     try {
       final res = await _api.getMapMarkers(onlyAbus: onlyAbus.value);
       if (res.isOk) {
+        // Filtrer les signalements sans coordonnées GPS avant le parsing
         markers.value = (res.body['markers'] as List)
-            .map((m) => MapMarkerModel.fromJson(m as Map<String, dynamic>))
+            .cast<Map<String, dynamic>>()
+            .where((m) => m['lat'] != null && m['lng'] != null)
+            .map((m) => MapMarkerModel.fromJson(m))
             .toList();
       }
     } finally {
@@ -54,4 +61,24 @@ class MapController extends GetxController {
   }
 
   void toggleOnlyAbus(bool value) => onlyAbus.value = value;
+
+  void zoomIn() {
+    try {
+      final cam = mapCtrl.camera;
+      mapCtrl.move(cam.center, cam.zoom + 1);
+    } catch (_) {}
+  }
+
+  void zoomOut() {
+    try {
+      final cam = mapCtrl.camera;
+      mapCtrl.move(cam.center, cam.zoom - 1);
+    } catch (_) {}
+  }
+
+  @override
+  void onClose() {
+    mapCtrl.dispose();
+    super.onClose();
+  }
 }

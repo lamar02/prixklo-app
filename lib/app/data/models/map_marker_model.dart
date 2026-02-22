@@ -23,8 +23,8 @@ class MapMarkerModel {
 
   factory MapMarkerModel.fromJson(Map<String, dynamic> j) => MapMarkerModel(
         id: j['id'] as String,
-        lat: (j['lat'] as num).toDouble(),
-        lng: (j['lng'] as num).toDouble(),
+        lat: (j['lat'] as num?)?.toDouble() ?? 0,
+        lng: (j['lng'] as num?)?.toDouble() ?? 0,
         status: j['status'] as String? ?? 'UNKNOWN',
         productName: j['productName'] as String? ?? '',
         packagingLabel: j['packagingLabel'] as String? ?? '',

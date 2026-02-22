@@ -19,6 +19,7 @@ class MapView extends GetView<AppMapController> {
       body: Stack(
         children: [
           FlutterMap(
+            mapController: controller.mapCtrl,
             options: MapOptions(
               initialCenter: LatLng(
                   AppMapController.defaultLat, AppMapController.defaultLng),
@@ -72,6 +73,24 @@ class MapView extends GetView<AppMapController> {
               ),
             ),
           ),
+          // Boutons zoom +/-
+          Positioned(
+            right: 12,
+            bottom: 40,
+            child: Column(
+              children: [
+                _ZoomButton(
+                  icon: Icons.add,
+                  onTap: controller.zoomIn,
+                ),
+                const SizedBox(height: 8),
+                _ZoomButton(
+                  icon: Icons.remove,
+                  onTap: controller.zoomOut,
+                ),
+              ],
+            ),
+          ),
           // Indicateur de chargement
           Obx(() => controller.isLoading.value
               ? const Positioned(
@@ -111,6 +130,30 @@ class MapView extends GetView<AppMapController> {
             color: Colors.white,
             size: 18,
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ZoomButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  const _ZoomButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(8),
+      elevation: 2,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: SizedBox(
+          width: 40,
+          height: 40,
+          child: Icon(icon, color: AppColors.neutral100, size: 22),
         ),
       ),
     );
