@@ -95,12 +95,13 @@ class Step3SendView extends GetView<ReportController> {
           }),
           const SizedBox(height: 8),
           const Text(
-            'La localisation est optionnelle mais améliore la carte.',
+            'La localisation est obligatoire pour pouvoir envoyer le signalement.',
             style: TextStyle(fontSize: 12, color: AppColors.neutral60),
           ),
           const SizedBox(height: 32),
           Obx(() => ElevatedButton.icon(
-                onPressed: controller.isSubmitting.value
+                onPressed: controller.isSubmitting.value ||
+                        !controller.hasLocation.value
                     ? null
                     : controller.submitReport,
                 icon: controller.isSubmitting.value

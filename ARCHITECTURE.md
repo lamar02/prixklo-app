@@ -28,7 +28,7 @@
 
 PrixKlo permet à des citoyens abidjanais de :
 
-- **Signaler** un prix observé en magasin (produit + conditionnement + prix + photo optionnelle + GPS optionnel)
+- **Signaler** un prix observé en magasin (produit + conditionnement + prix + photo optionnelle + GPS **obligatoire**)
 - **Consulter une carte** des signalements autour d'eux (ABUS en rouge, CONFORME en vert)
 - **Voir leur historique** de signalements
 - **Gagner des points et badges** via un système de gamification
@@ -271,7 +271,7 @@ Wrappeur autour de `SharedPreferences`. Initialisé de façon synchrone avant `r
 - Valeur pré-remplie si l'utilisateur revient en arrière
 
 **Étape 3 — Localisation + Envoi**
-- GPS optionnel via geolocator (demande de permission intégrée)
+- GPS **obligatoire** — le bouton "Envoyer" reste désactivé tant que la position n'est pas obtenue
 - Vérification de la connexion avant envoi
 - Si hors-ligne : mise en file d'attente locale → envoi différé
 - Résultat affiché en plein écran avec animation + points gagnés

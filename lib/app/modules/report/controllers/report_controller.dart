@@ -134,7 +134,11 @@ class ReportController extends GetxController {
   }
 
   Future<void> submitReport() async {
-    if (selectedPackaging.value == null || observedPrice.value <= 0) return;
+    if (selectedPackaging.value == null ||
+        observedPrice.value <= 0 ||
+        !hasLocation.value) {
+      return;
+    }
 
     isSubmitting.value = true;
     final online = await ConnectivityUtil.isOnline();
