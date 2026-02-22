@@ -31,12 +31,13 @@ class SplashController extends GetxController {
         Get.find<AuthController>().setUser(user);
         Get.offAllNamed(AppRoutes.mainNav);
       } else {
+        // 401 already handled by ApiService interceptor; clear token for other errors
         await _storage.clearToken();
         _redirectGuest();
       }
     } catch (_) {
-      await _storage.clearToken();
-      _redirectGuest();
+      // Network error — token may still be valid; go to mainNav optimistically
+      Get.offAllNamed(AppRoutes.mainNav);
     }
   }
 

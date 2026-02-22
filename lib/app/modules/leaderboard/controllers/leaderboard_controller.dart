@@ -18,14 +18,18 @@ class LeaderboardController extends GetxController {
 
   Future<void> fetchLeaderboard() async {
     isLoading.value = true;
-    final res = await _api.getLeaderboard(
-      period: period.value == 'all' ? null : period.value,
-    );
-    if (res.isOk) {
-      entries.value = (res.body['leaderboard'] as List)
-          .map((e) => LeaderboardEntryModel.fromJson(e as Map<String, dynamic>))
-          .toList();
+    try {
+      final res = await _api.getLeaderboard(
+        period: period.value == 'all' ? null : period.value,
+      );
+      if (res.isOk) {
+        entries.value = (res.body['leaderboard'] as List)
+            .map((e) =>
+                LeaderboardEntryModel.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+    } finally {
+      isLoading.value = false;
     }
-    isLoading.value = false;
   }
 }

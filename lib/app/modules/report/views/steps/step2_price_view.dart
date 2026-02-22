@@ -4,13 +4,35 @@ import 'package:get/get.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../controllers/report_controller.dart';
 
-class Step2PriceView extends GetView<ReportController> {
+class Step2PriceView extends StatefulWidget {
   const Step2PriceView({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final priceCtrl = TextEditingController();
+  State<Step2PriceView> createState() => _Step2PriceViewState();
+}
 
+class _Step2PriceViewState extends State<Step2PriceView> {
+  late final TextEditingController _priceCtrl;
+
+  ReportController get controller => Get.find<ReportController>();
+
+  @override
+  void initState() {
+    super.initState();
+    final currentPrice = Get.find<ReportController>().observedPrice.value;
+    _priceCtrl = TextEditingController(
+      text: currentPrice > 0 ? currentPrice.toStringAsFixed(0) : '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _priceCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -58,7 +80,7 @@ class Step2PriceView extends GetView<ReportController> {
           ),
           const SizedBox(height: 8),
           TextField(
-            controller: priceCtrl,
+            controller: _priceCtrl,
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700),

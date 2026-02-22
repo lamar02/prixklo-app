@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../data/models/map_marker_model.dart';
 import '../controllers/home_controller.dart';
 
 class HomeView extends GetView<HomeController> {
@@ -176,7 +177,7 @@ class _GamificationCard extends StatelessWidget {
 }
 
 class _AbuseCard extends StatelessWidget {
-  final dynamic marker;
+  final MapMarkerModel marker;
   const _AbuseCard({required this.marker});
 
   @override

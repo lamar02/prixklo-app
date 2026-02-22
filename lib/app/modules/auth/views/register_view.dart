@@ -3,16 +3,31 @@ import 'package:get/get.dart';
 import '../../../core/theme/app_theme.dart';
 import '../controllers/auth_controller.dart';
 
-class RegisterView extends GetView<AuthController> {
+class RegisterView extends StatefulWidget {
   const RegisterView({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final nameCtrl = TextEditingController();
-    final emailCtrl = TextEditingController();
-    final passCtrl = TextEditingController();
-    final obscure = true.obs;
+  State<RegisterView> createState() => _RegisterViewState();
+}
 
+class _RegisterViewState extends State<RegisterView> {
+  final _nameCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  final _passCtrl = TextEditingController();
+  final _obscure = true.obs;
+
+  AuthController get _auth => Get.find<AuthController>();
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _emailCtrl.dispose();
+    _passCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surface,
       appBar: AppBar(title: const Text('Créer un compte')),
@@ -37,7 +52,7 @@ class RegisterView extends GetView<AuthController> {
               ),
               const SizedBox(height: 32),
               TextField(
-                controller: nameCtrl,
+                controller: _nameCtrl,
                 textCapitalization: TextCapitalization.words,
                 decoration: const InputDecoration(
                   labelText: 'Nom complet',
@@ -46,7 +61,7 @@ class RegisterView extends GetView<AuthController> {
               ),
               const SizedBox(height: 16),
               TextField(
-                controller: emailCtrl,
+                controller: _emailCtrl,
                 keyboardType: TextInputType.emailAddress,
                 decoration: const InputDecoration(
                   labelText: 'Email',
@@ -55,26 +70,26 @@ class RegisterView extends GetView<AuthController> {
               ),
               const SizedBox(height: 16),
               Obx(() => TextField(
-                    controller: passCtrl,
-                    obscureText: obscure.value,
+                    controller: _passCtrl,
+                    obscureText: _obscure.value,
                     decoration: InputDecoration(
                       labelText: 'Mot de passe',
                       prefixIcon: const Icon(Icons.lock_outlined),
                       suffixIcon: IconButton(
-                        icon: Icon(obscure.value
+                        icon: Icon(_obscure.value
                             ? Icons.visibility_off_outlined
                             : Icons.visibility_outlined),
-                        onPressed: () => obscure.value = !obscure.value,
+                        onPressed: () => _obscure.value = !_obscure.value,
                       ),
                     ),
                   )),
               const SizedBox(height: 32),
               Obx(() => ElevatedButton(
-                    onPressed: controller.isLoading.value
+                    onPressed: _auth.isLoading.value
                         ? null
-                        : () => controller.register(
-                            nameCtrl.text, emailCtrl.text, passCtrl.text),
-                    child: controller.isLoading.value
+                        : () => _auth.register(
+                            _nameCtrl.text, _emailCtrl.text, _passCtrl.text),
+                    child: _auth.isLoading.value
                         ? const SizedBox(
                             height: 20,
                             width: 20,

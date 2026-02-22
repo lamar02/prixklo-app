@@ -60,13 +60,16 @@ class ReportController extends GetxController {
 
   Future<void> _loadProducts() async {
     productsLoading.value = true;
-    final res = await _api.getProducts();
-    if (res.isOk) {
-      products.value = (res.body['products'] as List)
-          .map((p) => ProductModel.fromJson(p as Map<String, dynamic>))
-          .toList();
+    try {
+      final res = await _api.getProducts();
+      if (res.isOk) {
+        products.value = (res.body['products'] as List)
+            .map((p) => ProductModel.fromJson(p as Map<String, dynamic>))
+            .toList();
+      }
+    } finally {
+      productsLoading.value = false;
     }
-    productsLoading.value = false;
   }
 
   void selectProduct(ProductModel product) {

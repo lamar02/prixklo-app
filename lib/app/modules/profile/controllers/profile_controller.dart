@@ -23,15 +23,18 @@ class ProfileController extends GetxController {
 
   Future<void> fetchProfile() async {
     isLoading.value = true;
-    final res = await _api.getGamification();
-    if (res.isOk) {
-      final g = GamificationModel.fromJson(res.body as Map<String, dynamic>);
-      points.value = g.points;
-      level.value = g.level;
-      badges.value = g.badges;
-      authCtrl.updatePoints(g.points, g.level);
+    try {
+      final res = await _api.getGamification();
+      if (res.isOk) {
+        final g = GamificationModel.fromJson(res.body as Map<String, dynamic>);
+        points.value = g.points;
+        level.value = g.level;
+        badges.value = g.badges;
+        authCtrl.updatePoints(g.points, g.level);
+      }
+    } finally {
+      isLoading.value = false;
     }
-    isLoading.value = false;
   }
 
   double get levelProgress {

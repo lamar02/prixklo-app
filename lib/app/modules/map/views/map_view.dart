@@ -18,25 +18,25 @@ class MapView extends GetView<AppMapController> {
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
-          Obx(() => FlutterMap(
-                options: MapOptions(
-                  initialCenter: LatLng(
-                      AppMapController.defaultLat, AppMapController.defaultLng),
-                  initialZoom: 13,
-                ),
-                children: [
-                  TileLayer(
-                    urlTemplate:
-                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'ci.prixklo.app',
-                  ),
-                  MarkerLayer(
+          FlutterMap(
+            options: MapOptions(
+              initialCenter: LatLng(
+                  AppMapController.defaultLat, AppMapController.defaultLng),
+              initialZoom: 13,
+            ),
+            children: [
+              TileLayer(
+                urlTemplate:
+                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'ci.prixklo.app',
+              ),
+              Obx(() => MarkerLayer(
                     markers: controller.markers
                         .map((m) => _buildMarker(m))
                         .toList(),
-                  ),
-                ],
-              )),
+                  )),
+            ],
+          ),
           // Switch Abus seulement
           Positioned(
             top: MediaQuery.of(context).padding.top + 12,

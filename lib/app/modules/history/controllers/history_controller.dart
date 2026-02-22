@@ -25,18 +25,21 @@ class HistoryController extends GetxController {
     if (!hasMore.value || isLoading.value) return;
 
     isLoading.value = true;
-    final res = await _api.getMyReports(page: _page);
-    if (res.isOk) {
-      final newReports = (res.body['reports'] as List)
-          .map((r) => ReportModel.fromJson(r as Map<String, dynamic>))
-          .toList();
-      reports.addAll(newReports);
-      if (newReports.isEmpty) {
-        hasMore.value = false;
-      } else {
-        _page++;
+    try {
+      final res = await _api.getMyReports(page: _page);
+      if (res.isOk) {
+        final newReports = (res.body['reports'] as List)
+            .map((r) => ReportModel.fromJson(r as Map<String, dynamic>))
+            .toList();
+        reports.addAll(newReports);
+        if (newReports.isEmpty) {
+          hasMore.value = false;
+        } else {
+          _page++;
+        }
       }
+    } finally {
+      isLoading.value = false;
     }
-    isLoading.value = false;
   }
 }
