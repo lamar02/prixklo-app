@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -5,12 +6,19 @@ import 'app/core/app_binding.dart';
 import 'app/core/theme/app_theme.dart';
 import 'app/routes/app_pages.dart';
 import 'app/routes/app_routes.dart';
+import 'app/services/push_notification_service.dart';
 import 'app/services/storage_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   // StorageService initialisé avant runApp (requis pour SharedPreferences)
   await Get.putAsync(() => StorageService().init());
+
+  // Firebase — nécessite google-services.json (Android) et GoogleService-Info.plist (iOS)
+  await Firebase.initializeApp();
+  await Get.putAsync(() => PushNotificationService().init(), permanent: true);
+
   runApp(const PrixKloApp());
 }
 

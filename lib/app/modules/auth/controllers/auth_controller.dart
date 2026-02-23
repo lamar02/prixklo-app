@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import '../../../data/models/user_model.dart';
 import '../../../routes/app_routes.dart';
 import '../../../services/api_service.dart';
+import '../../../services/push_notification_service.dart';
 import '../../../services/storage_service.dart';
 
 class AuthController extends GetxController {
@@ -22,6 +23,7 @@ class AuthController extends GetxController {
       if (res.isOk) {
         await _storage.saveToken(res.body['token'] as String);
         user.value = UserModel.fromJson(res.body['user'] as Map<String, dynamic>);
+        _registerPush();
         Get.offAllNamed(AppRoutes.mainNav);
       } else {
         final msg = res.body?['message'] as String? ?? 'Identifiants incorrects';
@@ -40,6 +42,7 @@ class AuthController extends GetxController {
       if (res.statusCode == 201) {
         await _storage.saveToken(res.body['token'] as String);
         user.value = UserModel.fromJson(res.body['user'] as Map<String, dynamic>);
+        _registerPush();
         Get.offAllNamed(AppRoutes.mainNav);
       } else {
         final msg = res.body?['message'] as String?
@@ -59,6 +62,12 @@ class AuthController extends GetxController {
     await _storage.clearToken();
     user.value = null;
     Get.offAllNamed(AppRoutes.login);
+  }
+
+  void _registerPush() {
+    try {
+      Get.find<PushNotificationService>().registerToken();
+    } catch (_) {}
   }
 
   void updatePoints(int points, int level) {
