@@ -7,6 +7,7 @@ class ReportModel {
   final String createdAt;
   final String packagingLabel;
   final String productName;
+  final String? shopName;
 
   const ReportModel({
     required this.id,
@@ -17,6 +18,7 @@ class ReportModel {
     required this.createdAt,
     required this.packagingLabel,
     required this.productName,
+    this.shopName,
   });
 
   factory ReportModel.fromJson(Map<String, dynamic> j) {
@@ -31,6 +33,7 @@ class ReportModel {
       createdAt: j['createdAt'] as String? ?? '',
       packagingLabel: packaging['label'] as String? ?? '',
       productName: product['name'] as String? ?? '',
+      shopName: j['shopName'] as String?,
     );
   }
 }

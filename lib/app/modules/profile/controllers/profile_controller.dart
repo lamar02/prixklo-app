@@ -1,11 +1,14 @@
 import 'package:get/get.dart';
 import '../../../data/models/gamification_model.dart';
 import '../../../modules/auth/controllers/auth_controller.dart';
+import '../../../modules/report/controllers/report_controller.dart';
 import '../../../routes/app_routes.dart';
 import '../../../services/api_service.dart';
+import '../../../services/storage_service.dart';
 
 class ProfileController extends GetxController {
   final _api = Get.find<ApiService>();
+  final _storage = Get.find<StorageService>();
   final authCtrl = Get.find<AuthController>();
 
   final RxInt points = 0.obs;
@@ -14,6 +17,8 @@ class ProfileController extends GetxController {
   final RxBool isLoading = false.obs;
 
   static const levelThresholds = [0, 50, 150, 350, 700, 1200];
+
+  RxInt get pendingCount => _storage.pendingCount;
 
   @override
   void onInit() {
@@ -35,6 +40,10 @@ class ProfileController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  Future<void> flushPendingReports() async {
+    await Get.find<ReportController>().flushOfflineQueue();
   }
 
   double get levelProgress {

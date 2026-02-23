@@ -191,9 +191,12 @@ Crée un signalement. Le serveur calcule automatiquement le statut en comparant 
   "observedPrice": 15000,
   "lat": 5.3599,
   "lng": -4.0083,
+  "shopName": "Supermarché Hayat Cocody",
   "photoUrl": "https://..."
 }
 ```
+
+> `shopName` est **optionnel** — nom de l'enseigne ou du marché où le prix a été observé.
 
 **Body (multipart/form-data)** — avec photo (Cloudinary requis)
 ```
@@ -201,6 +204,7 @@ packagingId=clxxx...
 observedPrice=15000
 lat=5.3599
 lng=-4.0083
+shopName=Supermarché Hayat Cocody
 photo=<fichier image>
 ```
 
@@ -216,6 +220,7 @@ photo=<fichier image>
     "maxPrice": 12500,
     "lat": 5.3599,
     "lng": -4.0083,
+    "shopName": "Supermarché Hayat Cocody",
     "photoUrl": null,
     "createdAt": "...",
     "packaging": { "label": "Sac 25kg", "product": { "name": "Riz local" } }
@@ -273,11 +278,14 @@ Retourne les markers pour la carte.
       "packagingLabel": "Sac 25kg",
       "observedPrice": 15000,
       "maxPrice": 12500,
+      "shopName": "Supermarché Hayat Cocody",
       "createdAt": "..."
     }
   ]
 }
 ```
+
+> `shopName` est `null` si l'auteur du signalement n'a pas renseigné l'enseigne.
 
 ---
 
@@ -495,9 +503,12 @@ Stocker le `token` reçu et l'envoyer dans chaque requête suivante via `Authori
   "packagingId": "<id du packaging sélectionné>",
   "observedPrice": 15000,
   "lat": 5.3599,
-  "lng": -4.0083
+  "lng": -4.0083,
+  "shopName": "Marché Adjamé 220 Logements"
 }
 ```
+
+> `shopName` est optionnel mais recommandé — il apparaît sur la carte pour identifier l'enseigne.
 
 Pour envoyer une **photo** (optionnel) : utiliser `multipart/form-data` avec le champ `photo` (fichier image) + les autres champs en texte. Nécessite Cloudinary configuré. Sans photo, le body JSON suffit.
 
@@ -655,12 +666,15 @@ Ces routes publiques/citoyen sont également utiles pour un dashboard admin :
 | `citoyen1@prixklo.ci` | `password123` | CITIZEN |
 | `citoyen2@prixklo.ci` | `password123` | CITIZEN |
 
+**Données seed incluses :**
+- 5 produits, 10 packagings, 10 prix officiels (bulletin Janvier 2025)
+- **20 signalements d'abus** géolocalisés dans 10 quartiers d'Abidjan (Cocody, Plateau, Yopougon, Abobo, Adjamé, Marcory, Koumassi, Treichville, Port-Bouët, Attécoubé) — dont 14 avec nom d'enseigne
+
 ---
 
 ## Variables d'environnement
 
 | Variable | Obligatoire | Description |
-
 |----------|------------|-------------|
 | `DATABASE_URL` | Oui | URL PostgreSQL Neon |
 | `JWT_SECRET` | Oui | Clé secrète JWT (changer en prod) |

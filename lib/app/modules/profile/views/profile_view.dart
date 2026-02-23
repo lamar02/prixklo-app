@@ -37,7 +37,7 @@ class ProfileView extends GetView<ProfileController> {
                     Container(
                       width: 72,
                       height: 72,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color: AppColors.primary,
                         shape: BoxShape.circle,
                       ),
@@ -140,7 +140,59 @@ class ProfileView extends GetView<ProfileController> {
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
+              // Signalements en attente
+              Obx(() {
+                final count = controller.pendingCount.value;
+                if (count == 0) return const SizedBox.shrink();
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.primary.withAlpha(80)),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withAlpha(20),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.cloud_upload_outlined,
+                            color: AppColors.primary, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '$count signalement${count > 1 ? 's' : ''} en attente',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.neutral100,
+                              ),
+                            ),
+                            const Text(
+                              'En attente de connexion pour être envoyés.',
+                              style: TextStyle(
+                                  fontSize: 12, color: AppColors.neutral60),
+                            ),
+                          ],
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: controller.flushPendingReports,
+                        child: const Text('Envoyer'),
+                      ),
+                    ],
+                  ),
+                );
+              }),
               // Badges
               if (controller.badges.isNotEmpty) ...[
                 const Text(

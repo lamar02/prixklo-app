@@ -5,6 +5,7 @@ class PendingReport {
   final double observedPrice;
   final double? lat;
   final double? lng;
+  final String? shopName;
   final DateTime queuedAt;
 
   const PendingReport({
@@ -12,6 +13,7 @@ class PendingReport {
     required this.observedPrice,
     this.lat,
     this.lng,
+    this.shopName,
     required this.queuedAt,
   });
 
@@ -20,6 +22,7 @@ class PendingReport {
         'observedPrice': observedPrice,
         if (lat != null) 'lat': lat,
         if (lng != null) 'lng': lng,
+        if (shopName != null && shopName!.isNotEmpty) 'shopName': shopName,
         'queuedAt': queuedAt.toIso8601String(),
       };
 
@@ -28,6 +31,7 @@ class PendingReport {
         observedPrice: (j['observedPrice'] as num).toDouble(),
         lat: (j['lat'] as num?)?.toDouble(),
         lng: (j['lng'] as num?)?.toDouble(),
+        shopName: j['shopName'] as String?,
         queuedAt: DateTime.parse(j['queuedAt'] as String),
       );
 

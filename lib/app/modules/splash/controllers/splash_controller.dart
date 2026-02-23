@@ -16,7 +16,6 @@ class SplashController extends GetxController {
   }
 
   Future<void> _checkAndRedirect() async {
-    await Future.delayed(const Duration(milliseconds: 1500));
 
     final token = _storage.token;
     if (token == null) {

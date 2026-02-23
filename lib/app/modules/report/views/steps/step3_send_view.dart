@@ -38,20 +38,33 @@ class Step3SendView extends GetView<ReportController> {
                       label: 'Conditionnement', value: pk?.label ?? '-'),
                   _SummaryRow(
                       label: 'Prix observé',
-                      value:
-                          '${price.toStringAsFixed(0)} FCFA'),
+                      value: '${price.toStringAsFixed(0)} FCFA'),
                   if (controller.photo.value != null)
                     const _SummaryRow(label: 'Photo', value: '✓ Ajoutée'),
                 ],
               ),
             );
           }),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
+          // Nom de l'enseigne
+          const Text(
+            'Nom de l\'enseigne (optionnel)',
+            style: TextStyle(
+                fontWeight: FontWeight.w700, color: AppColors.neutral100),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            decoration: const InputDecoration(
+              hintText: 'Ex : Marché Adjamé, Supermarché Hayat...',
+              prefixIcon: Icon(Icons.storefront_outlined),
+            ),
+            onChanged: (v) => controller.shopName.value = v,
+          ),
+          const SizedBox(height: 20),
           // GPS
           const Text('Localisation',
               style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.neutral100)),
+                  fontWeight: FontWeight.w700, color: AppColors.neutral100)),
           const SizedBox(height: 8),
           Obx(() {
             if (controller.hasLocation.value) {
@@ -71,6 +84,12 @@ class Step3SendView extends GetView<ReportController> {
                       style: const TextStyle(
                           color: AppColors.success,
                           fontWeight: FontWeight.w600),
+                    ),
+                    const Spacer(),
+                    GestureDetector(
+                      onTap: controller.locateUser,
+                      child: const Icon(Icons.refresh,
+                          color: AppColors.neutral60, size: 18),
                     ),
                   ],
                 ),
@@ -93,15 +112,14 @@ class Step3SendView extends GetView<ReportController> {
                   : 'Obtenir ma position'),
             );
           }),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           const Text(
-            'La localisation est obligatoire pour pouvoir envoyer le signalement.',
+            'La localisation améliore la carte et la détection d\'abus.',
             style: TextStyle(fontSize: 12, color: AppColors.neutral60),
           ),
           const SizedBox(height: 32),
           Obx(() => ElevatedButton.icon(
-                onPressed: controller.isSubmitting.value ||
-                        !controller.hasLocation.value
+                onPressed: controller.isSubmitting.value
                     ? null
                     : controller.submitReport,
                 icon: controller.isSubmitting.value
@@ -114,7 +132,7 @@ class Step3SendView extends GetView<ReportController> {
                     : const Icon(Icons.send_rounded),
                 label: Text(controller.isSubmitting.value
                     ? 'Envoi en cours...'
-                    : 'Envoyer le signalement'),
+                    : 'Signaler maintenant'),
               )),
         ],
       ),

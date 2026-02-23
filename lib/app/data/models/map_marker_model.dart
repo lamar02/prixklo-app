@@ -8,6 +8,7 @@ class MapMarkerModel {
   final double observedPrice;
   final double maxPrice;
   final String createdAt;
+  final String? shopName;
 
   const MapMarkerModel({
     required this.id,
@@ -19,6 +20,7 @@ class MapMarkerModel {
     required this.observedPrice,
     required this.maxPrice,
     required this.createdAt,
+    this.shopName,
   });
 
   factory MapMarkerModel.fromJson(Map<String, dynamic> j) => MapMarkerModel(
@@ -31,5 +33,6 @@ class MapMarkerModel {
         observedPrice: (j['observedPrice'] as num?)?.toDouble() ?? 0,
         maxPrice: (j['maxPrice'] as num?)?.toDouble() ?? 0,
         createdAt: j['createdAt'] as String? ?? '',
+        shopName: j['shopName'] as String?,
       );
 }

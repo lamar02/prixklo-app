@@ -30,9 +30,11 @@ class MapMarkerSheet extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: (isAbus ? AppColors.abus : AppColors.success).withAlpha(25),
+                  color:
+                      (isAbus ? AppColors.abus : AppColors.success).withAlpha(25),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -55,6 +57,21 @@ class MapMarkerSheet extends StatelessWidget {
               color: AppColors.neutral100,
             ),
           ),
+          if (marker.shopName != null && marker.shopName!.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                const Icon(Icons.storefront_outlined,
+                    size: 14, color: AppColors.neutral60),
+                const SizedBox(width: 4),
+                Text(
+                  marker.shopName!,
+                  style: const TextStyle(
+                      fontSize: 13, color: AppColors.neutral60),
+                ),
+              ],
+            ),
+          ],
           const SizedBox(height: 8),
           Row(
             children: [
@@ -87,16 +104,19 @@ class _PriceInfo extends StatelessWidget {
   final String label;
   final String value;
   final Color color;
-  const _PriceInfo({required this.label, required this.value, required this.color});
+  const _PriceInfo(
+      {required this.label, required this.value, required this.color});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, color: AppColors.neutral60)),
+        Text(label,
+            style: const TextStyle(fontSize: 12, color: AppColors.neutral60)),
         Text(value,
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: color)),
+            style: TextStyle(
+                fontSize: 16, fontWeight: FontWeight.w700, color: color)),
       ],
     );
   }

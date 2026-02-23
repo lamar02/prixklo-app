@@ -35,9 +35,28 @@ class _ReportResultSheetState extends State<ReportResultSheet>
   @override
   Widget build(BuildContext context) {
     final isAbus = widget.result.status == 'ABUS';
-    final color = isAbus ? AppColors.abus : AppColors.success;
-    final emoji = isAbus ? '🚨' : '✅';
-    final label = isAbus ? 'Abus détecté' : 'Prix conforme';
+    final isUnknown = widget.result.status == 'UNKNOWN';
+
+    final color = isAbus
+        ? AppColors.abus
+        : isUnknown
+            ? AppColors.unknown
+            : AppColors.success;
+    final emoji = isAbus
+        ? '🚨'
+        : isUnknown
+            ? '❓'
+            : '✅';
+    final label = isAbus
+        ? 'Abus détecté'
+        : isUnknown
+            ? 'Statut inconnu'
+            : 'Prix conforme';
+    final pointsLabel = isAbus
+        ? '+10 points gagnés !'
+        : isUnknown
+            ? '+2 points gagnés !'
+            : '+5 points gagnés !';
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -77,6 +96,16 @@ class _ReportResultSheetState extends State<ReportResultSheet>
                     fontSize: 16, color: AppColors.neutral60),
                 textAlign: TextAlign.center,
               ),
+              if (widget.result.shopName != null &&
+                  widget.result.shopName!.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  widget.result.shopName!,
+                  style: const TextStyle(
+                      fontSize: 13, color: AppColors.neutral60),
+                  textAlign: TextAlign.center,
+                ),
+              ],
               const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -112,11 +141,10 @@ class _ReportResultSheetState extends State<ReportResultSheet>
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text('⭐',
-                        style: TextStyle(fontSize: 22)),
+                    const Text('⭐', style: TextStyle(fontSize: 22)),
                     const SizedBox(width: 8),
                     Text(
-                      isAbus ? '+10 points gagnés !' : '+5 points gagnés !',
+                      pointsLabel,
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
@@ -126,12 +154,18 @@ class _ReportResultSheetState extends State<ReportResultSheet>
                   ],
                 ),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 32),
               ElevatedButton(
                 onPressed: Get.find<ReportController>().resetWizard,
                 child: const Text('Nouveau signalement'),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                onPressed: Get.find<ReportController>().viewOnMap,
+                icon: const Icon(Icons.map_outlined),
+                label: const Text('Voir sur la carte'),
+              ),
+              const SizedBox(height: 10),
               TextButton(
                 onPressed: Get.find<ReportController>().resetWizard,
                 child: const Text(

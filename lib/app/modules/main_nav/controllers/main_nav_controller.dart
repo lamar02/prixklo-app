@@ -5,5 +5,6 @@ class MainNavController extends GetxController {
 
   void changeTab(int index) => selectedIndex.value = index;
 
+  void goToMap() => selectedIndex.value = 1;
   void goToReport() => selectedIndex.value = 2;
 }

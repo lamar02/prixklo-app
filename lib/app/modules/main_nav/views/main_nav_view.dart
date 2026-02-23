@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../services/storage_service.dart';
 import '../../home/views/home_view.dart';
 import '../../map/views/map_view.dart';
 import '../../profile/views/profile_view.dart';
@@ -11,6 +12,7 @@ class MainNavView extends GetView<MainNavController> {
 
   @override
   Widget build(BuildContext context) {
+    final storage = Get.find<StorageService>();
     return Obx(() => Scaffold(
           body: IndexedStack(
             index: controller.selectedIndex.value,
@@ -24,23 +26,37 @@ class MainNavView extends GetView<MainNavController> {
           bottomNavigationBar: BottomNavigationBar(
             currentIndex: controller.selectedIndex.value,
             onTap: controller.changeTab,
-            items: const [
-              BottomNavigationBarItem(
+            items: [
+              const BottomNavigationBarItem(
                 icon: Icon(Icons.home_outlined),
                 activeIcon: Icon(Icons.home),
                 label: 'Accueil',
               ),
-              BottomNavigationBarItem(
+              const BottomNavigationBarItem(
                 icon: Icon(Icons.map_outlined),
                 activeIcon: Icon(Icons.map),
                 label: 'Carte',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.add_circle_outline),
-                activeIcon: Icon(Icons.add_circle),
+                icon: Obx(() {
+                  final count = storage.pendingCount.value;
+                  if (count == 0) return const Icon(Icons.add_circle_outline);
+                  return Badge(
+                    label: Text('$count'),
+                    child: const Icon(Icons.add_circle_outline),
+                  );
+                }),
+                activeIcon: Obx(() {
+                  final count = storage.pendingCount.value;
+                  if (count == 0) return const Icon(Icons.add_circle);
+                  return Badge(
+                    label: Text('$count'),
+                    child: const Icon(Icons.add_circle),
+                  );
+                }),
                 label: 'Signaler',
               ),
-              BottomNavigationBarItem(
+              const BottomNavigationBarItem(
                 icon: Icon(Icons.person_outline),
                 activeIcon: Icon(Icons.person),
                 label: 'Profil',
