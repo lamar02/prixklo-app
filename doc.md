@@ -191,12 +191,14 @@ Crée un signalement. Le serveur calcule automatiquement le statut en comparant 
   "observedPrice": 15000,
   "lat": 5.3599,
   "lng": -4.0083,
+  "type": "SIGNALEMENT",
   "shopName": "Supermarché Hayat Cocody",
   "photoUrl": "https://..."
 }
 ```
 
 > `shopName` est **optionnel** — nom de l'enseigne ou du marché où le prix a été observé.
+> `type` est optionnel — `"SIGNALEMENT"` (défaut) ou `"CONFIRMATION"` (pour confirmer un prix déjà signalé).
 
 **Body (multipart/form-data)** — avec photo (Cloudinary requis)
 ```
@@ -204,6 +206,7 @@ packagingId=clxxx...
 observedPrice=15000
 lat=5.3599
 lng=-4.0083
+type=SIGNALEMENT
 shopName=Supermarché Hayat Cocody
 photo=<fichier image>
 ```
@@ -216,6 +219,7 @@ photo=<fichier image>
   "report": {
     "id": "...",
     "status": "ABUS",
+    "type": "SIGNALEMENT",
     "observedPrice": 15000,
     "maxPrice": 12500,
     "lat": 5.3599,
@@ -228,13 +232,15 @@ photo=<fichier image>
 }
 ```
 
-**Règles de calcul du statut**
+**Règles de calcul du statut** (basé sur le prix officiel du bulletin actif)
 
 | Condition | Statut | Points gagnés |
 |-----------|--------|---------------|
-| `observedPrice > maxPrice` | `ABUS` | +10 pts |
-| `observedPrice ≤ maxPrice` | `CONFORME` | +5 pts |
+| `observedPrice > maxPrice × 1.05` | `ABUS` | +10 pts |
+| `maxPrice × 0.95 ≤ observedPrice ≤ maxPrice × 1.05` | `LIMITE` | +7 pts |
+| `observedPrice < maxPrice × 0.95` | `CONFORME` | +5 pts |
 | Aucun prix officiel trouvé | `UNKNOWN` | +2 pts |
+| `type = "CONFIRMATION"` | — | +3 pts (indépendant du statut) |
 
 ---
 
@@ -286,6 +292,136 @@ Retourne les markers pour la carte.
 ```
 
 > `shopName` est `null` si l'auteur du signalement n'a pas renseigné l'enseigne.
+
+---
+
+## Prix observés
+
+### `GET /api/prices/summary`
+
+Résumé des prix observés récemment pour un packaging donné dans un rayon géographique. Point d'entrée principal du flux "vérifier ce prix" côté mobile.
+
+| Paramètre | Type | Défaut | Description |
+|-----------|------|--------|-------------|
+| `packagingId` | string | — | **Requis** |
+| `lat` | number | — | **Requis** — latitude de l'utilisateur |
+| `lng` | number | — | **Requis** — longitude de l'utilisateur |
+| `radius` | number | `5` | Rayon en km |
+
+**Réponse 200**
+```json
+{
+  "packaging": {
+    "id": "...",
+    "label": "Sac 25kg",
+    "product": { "id": "...", "name": "Riz Papillon", "category": "Riz" }
+  },
+  "officialMaxPrice": 12500,
+  "observed": {
+    "count": 8,
+    "avg": 13200,
+    "min": 12000,
+    "max": 14500,
+    "statusBreakdown": { "CONFORME": 2, "LIMITE": 3, "ABUS": 3 }
+  },
+  "dominantStatus": "ABUS",
+  "radiusKm": 5
+}
+```
+
+> - `observed` est `{ count: 0, avg: null, min: null, max: null, statusBreakdown: {} }` si aucun signalement dans la zone.
+> - `dominantStatus` est calculé sur la moyenne observée et peut être `null` si `officialMaxPrice` est indisponible.
+> - Les données couvrent les 30 derniers jours.
+
+---
+
+### `GET /api/prices/history`
+
+Historique hebdomadaire des prix observés pour un packaging dans un rayon (30 derniers jours). Utilisé pour afficher un graphique de tendance.
+
+| Paramètre | Type | Défaut | Description |
+|-----------|------|--------|-------------|
+| `packagingId` | string | — | **Requis** |
+| `lat` | number | — | **Requis** |
+| `lng` | number | — | **Requis** |
+| `radius` | number | `5` | Rayon en km |
+
+**Réponse 200**
+```json
+{
+  "packagingId": "...",
+  "radiusKm": 5,
+  "history": [
+    { "weekStart": "2025-05-26", "avg": 12800, "count": 3 },
+    { "weekStart": "2025-06-02", "avg": 13500, "count": 5 }
+  ]
+}
+```
+
+> `weekStart` est le lundi de chaque semaine ISO (format `YYYY-MM-DD`). Le tableau est trié chronologiquement. Peut être vide si aucun signalement.
+
+---
+
+## Notifications
+
+> Auth requise sur toutes les routes
+
+### `POST /api/notifications/token`
+
+Enregistre ou met à jour le token FCM de l'appareil de l'utilisateur connecté.
+
+**Body**
+```json
+{ "token": "fcm_device_token_ici", "platform": "android" }
+```
+
+> `platform` : `"android"` ou `"ios"`
+
+**Réponse 200**
+```json
+{ "deviceToken": { "id": "...", "token": "...", "platform": "android", "userId": "..." } }
+```
+
+---
+
+### `GET /api/notifications`
+
+Retourne les 50 dernières notifications de l'utilisateur. Les non-lues apparaissent en premier.
+
+**Réponse 200**
+```json
+{
+  "notifications": [
+    {
+      "id": "...",
+      "title": "Abus signalé près de vous",
+      "body": "Un nouveau signalement d'abus de prix a été détecté dans votre quartier.",
+      "type": "ABUS_NEARBY",
+      "read": false,
+      "data": { "reportId": "...", "lat": "5.36", "lng": "-4.00" },
+      "createdAt": "..."
+    }
+  ]
+}
+```
+
+**Types de notification**
+
+| Type | Déclencheur |
+|------|-------------|
+| `ABUS_NEARBY` | Un abus signalé dans un rayon de 5 km |
+| `REPORT_CONFIRMED` | 3, 5 ou 10 personnes ont signalé le même abus dans un rayon de 2 km |
+
+---
+
+### `PATCH /api/notifications/read`
+
+Marque toutes les notifications non lues de l'utilisateur comme lues.
+
+**Réponse 200**
+```json
+{ "updated": 3 }
+```
 
 ---
 
@@ -426,7 +562,7 @@ Liste tous les signalements (paginé, 50/page).
 | Paramètre | Type | Description |
 |-----------|------|-------------|
 | `page` | number | Page (défaut: 1) |
-| `status` | `CONFORME / ABUS / UNKNOWN` | Filtre optionnel |
+| `status` | `CONFORME / LIMITE / ABUS / UNKNOWN` | Filtre optionnel |
 
 **Réponse 200**
 ```json
@@ -464,85 +600,335 @@ ou
 
 ## Référence App Mobile
 
-Tout ce dont l'application mobile (citoyen) a besoin, dans l'ordre d'utilisation.
-
-### Flux d'authentification
-
-| Étape | Endpoint | Auth |
-|-------|----------|------|
-| Inscription | `POST /api/auth/register` | — |
-| Connexion | `POST /api/auth/login` | — |
-| Profil connecté | `GET /api/auth/me` | Bearer token |
-
-Stocker le `token` reçu et l'envoyer dans chaque requête suivante via `Authorization: Bearer <token>`.
+Flux complet de l'application citoyen, dans l'ordre chronologique d'utilisation.
 
 ---
 
-### Flux consultation des prix
+### Étape 1 — Authentification
 
-| Étape | Endpoint | Remarque |
-|-------|----------|----------|
-| Charger le catalogue | `GET /api/products` | Liste produits + packagings pour l'UI de sélection |
-| Charger les prix max | `GET /api/official-prices/active?zone=ABIDJAN_30KM` | Version allégée, idéale pour mise en cache côté mobile |
+**Première ouverture (nouveau compte)**
+```
+POST /api/auth/register
+Body: { "email": "user@example.ci", "password": "...", "name": "Konan Kouamé" }
+→ 201 : { "token": "eyJ...", "user": { id, email, name, role, points, level } }
+```
 
-> **Conseil** : appeler `/api/official-prices/active` au démarrage et mettre les résultats en cache local. Recharger uniquement si le bulletin change.
+**Ouvertures suivantes (connexion)**
+```
+POST /api/auth/login
+Body: { "email": "user@example.ci", "password": "..." }
+→ 200 : { "token": "eyJ...", "user": { id, email, name, role, points, level } }
+```
+
+Stocker le `token` localement. L'envoyer sur chaque requête protégée :
+```
+Authorization: Bearer <token>
+```
 
 ---
 
-### Flux signalement
+### Étape 2 — Initialisation au démarrage
 
-| Étape | Endpoint | Auth |
-|-------|----------|------|
-| Créer un signalement | `POST /api/reports` | Bearer token |
-| Voir mes signalements | `GET /api/reports/mine?page=1` | Bearer token |
-| Carte des abus | `GET /api/reports/map?onlyAbus=false` | — |
+Deux appels à effectuer **une seule fois au démarrage** (résultats à mettre en cache local) :
 
-**Body minimum pour créer un signalement :**
+| Appel | Endpoint | Utilité |
+|-------|----------|---------|
+| Catalogue produits | `GET /api/products` | Alimente la recherche / sélection de produit |
+| Prix plafond officiels | `GET /api/official-prices/active?zone=ABIDJAN_30KM` | Référence prix max par packaging |
+
+> Recharger uniquement quand le bulletin change (vérifier via `GET /api/bulletins/active`).
+
+**Enregistrer le token FCM** (après login, si notifications activées) :
+```
+POST /api/notifications/token   [Auth]
+Body: { "token": "<fcm_token>", "platform": "android" }
+```
+```dart
+// Flutter
+String? token = await FirebaseMessaging.instance.getToken();
+
+// → POST /api/notifications/token
+FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
+  // → POST /api/notifications/token  (mise à jour)
+});
+```
+
+---
+
+### Étape 3 — Sélection du produit
+
+L'utilisateur cherche un produit dans le catalogue chargé (Étape 2). Il obtient un `packagingId` pour les appels suivants.
+
+---
+
+### Étape 4 — Vérification des prix dans le quartier
+
+Avant d'agir, l'app affiche les prix constatés par d'autres citoyens autour de l'utilisateur.
+
+**Résumé local (écran principal prix)**
+```
+GET /api/prices/summary?packagingId=<id>&lat=5.3599&lng=-4.0083&radius=5
+```
 ```json
 {
-  "packagingId": "<id du packaging sélectionné>",
-  "observedPrice": 15000,
-  "lat": 5.3599,
-  "lng": -4.0083,
-  "shopName": "Marché Adjamé 220 Logements"
+  "packaging": { "label": "Sac 25kg", "product": { "name": "Riz Papillon" } },
+  "officialMaxPrice": 12500,
+  "observed": {
+    "count": 8,
+    "avg": 13200,
+    "min": 12000,
+    "max": 14500,
+    "statusBreakdown": { "CONFORME": 2, "LIMITE": 3, "ABUS": 3 }
+  },
+  "dominantStatus": "ABUS",
+  "radiusKm": 5
 }
 ```
 
-> `shopName` est optionnel mais recommandé — il apparaît sur la carte pour identifier l'enseigne.
+**Courbe de tendance (graphique historique — optionnel)**
+```
+GET /api/prices/history?packagingId=<id>&lat=5.3599&lng=-4.0083
+```
+```json
+{
+  "history": [
+    { "weekStart": "2025-05-26", "avg": 12800, "count": 3 },
+    { "weekStart": "2025-06-02", "avg": 13500, "count": 5 }
+  ]
+}
+```
 
-Pour envoyer une **photo** (optionnel) : utiliser `multipart/form-data` avec le champ `photo` (fichier image) + les autres champs en texte. Nécessite Cloudinary configuré. Sans photo, le body JSON suffit.
-
-**Statuts retournés automatiquement :**
-- `CONFORME` → prix ok, +5 pts
-- `ABUS` → prix trop élevé, +10 pts
-- `UNKNOWN` → pas de prix officiel disponible, +2 pts
-
----
-
-### Flux gamification
-
-| Endpoint | Description |
-|----------|-------------|
-| `GET /api/gamification/me` | Points, niveau, badges de l'utilisateur connecté |
-| `GET /api/leaderboard?period=week` | Classement de la semaine |
-| `GET /api/leaderboard?period=month` | Classement du mois |
-| `GET /api/leaderboard` | Classement global tous temps |
+> `dominantStatus` est calculé sur la moyenne observée. Si `count = 0`, aucun signalement n'existe encore dans la zone — inviter l'utilisateur à être le premier à signaler.
 
 ---
 
-### Résumé — endpoints mobile (10 routes)
+### Étape 5 — Signalement ou confirmation
+
+L'utilisateur a constaté un prix. Il choisit l'une des deux actions :
+
+#### A. Nouveau signalement (`type: "SIGNALEMENT"` — défaut)
+
+Utiliser quand l'utilisateur observe lui-même un prix pour la première fois dans ce commerce.
 
 ```
-POST  /api/auth/register
-POST  /api/auth/login
-GET   /api/auth/me                          [Auth]
-GET   /api/products
-GET   /api/official-prices/active           ?zone=ABIDJAN_30KM
-POST  /api/reports                          [Auth] [Rate limit]
-GET   /api/reports/mine                     [Auth] ?page=
-GET   /api/reports/map                      ?onlyAbus=true|false
-GET   /api/gamification/me                  [Auth]
-GET   /api/leaderboard                      ?period=week|month
+POST /api/reports   [Auth]   [Rate limit : 10/min]
+```
+```json
+{
+  "packagingId": "<id>",
+  "observedPrice": 15000,
+  "lat": 5.3599,
+  "lng": -4.0083,
+  "shopName": "Supermarché Hayat Cocody"
+}
+```
+
+> `shopName` : optionnel mais recommandé (affiché sur la carte).
+> `photoUrl` : URL Cloudinary (JSON) ou champ `photo` en multipart/form-data.
+
+#### B. Confirmation d'un prix existant (`type: "CONFIRMATION"`)
+
+Utiliser quand l'utilisateur constate le même prix qu'un signalement déjà visible — pour renforcer sa crédibilité.
+
+```json
+{
+  "packagingId": "<id>",
+  "observedPrice": 15000,
+  "lat": 5.3599,
+  "lng": -4.0083,
+  "type": "CONFIRMATION"
+}
+```
+
+**Réponse 201 (commune aux deux actions)**
+```json
+{
+  "report": {
+    "id": "...",
+    "status": "ABUS",
+    "type": "SIGNALEMENT",
+    "observedPrice": 15000,
+    "maxPrice": 12500,
+    "lat": 5.3599,
+    "lng": -4.0083,
+    "shopName": "Supermarché Hayat Cocody",
+    "photoUrl": null,
+    "createdAt": "...",
+    "packaging": { "label": "Sac 25kg", "product": { "name": "Riz Papillon" } }
+  }
+}
+```
+
+**Règles de statut et points attribués**
+
+| Condition | Statut | Points |
+|-----------|--------|--------|
+| `observedPrice > maxPrice × 1.05` | `ABUS` | +10 pts |
+| `maxPrice × 0.95 ≤ price ≤ maxPrice × 1.05` | `LIMITE` | +7 pts |
+| `observedPrice < maxPrice × 0.95` | `CONFORME` | +5 pts |
+| Pas de prix officiel disponible | `UNKNOWN` | +2 pts |
+| `type = "CONFIRMATION"` (indépendant du statut) | — | +3 pts |
+
+**Déclenchement automatique des notifications push (côté serveur)**
+- Si `status = "ABUS"` → les utilisateurs dans un rayon de 5 km reçoivent une notification *"Abus signalé près de vous"*
+- Quand 3, 5 ou 10 personnes ont signalé le même abus dans un rayon de 2 km → les auteurs reçoivent *"Votre signalement confirmé"*
+
+---
+
+### Étape 6 — Gamification
+
+Après chaque signalement, l'app peut rafraîchir le profil de l'utilisateur pour afficher les points gagnés et les badges débloqués.
+
+```
+GET /api/gamification/me   [Auth]
+```
+```json
+{
+  "points": 47,
+  "level": 1,
+  "badges": [
+    { "code": "PREMIER_SIGNALEMENT", "name": "Premier Signalement", "earnedAt": "..." },
+    { "code": "CHASSEUR_ABUS", "name": "Chasseur d'Abus", "earnedAt": "..." }
+  ]
+}
+```
+
+**Système de niveaux**
+
+| Niveau | Points requis |
+|--------|--------------|
+| 1 | 0+ |
+| 2 | 50+ |
+| 3 | 150+ |
+| 4 | 350+ |
+| 5 | 700+ |
+| 6 | 1200+ |
+
+**Badges disponibles**
+
+| Code | Condition de déblocage |
+|------|------------------------|
+| `PREMIER_SIGNALEMENT` | Premier signalement de l'utilisateur |
+| `CHASSEUR_ABUS` | Premier signalement avec statut ABUS |
+
+**Classement**
+```
+GET /api/leaderboard               → classement global (points cumulés)
+GET /api/leaderboard?period=week   → classement de la semaine (nb signalements)
+GET /api/leaderboard?period=month  → classement du mois
+```
+
+---
+
+### Étape 7 — Carte des signalements
+
+Affiche tous les signalements géolocalisés (markers sur la carte).
+
+```
+GET /api/reports/map
+GET /api/reports/map?onlyAbus=true   → filtre uniquement les abus
+```
+```json
+{
+  "markers": [
+    {
+      "id": "...",
+      "lat": 5.3599,
+      "lng": -4.0083,
+      "status": "ABUS",
+      "productName": "Riz Papillon",
+      "packagingLabel": "Sac 25kg",
+      "observedPrice": 15000,
+      "maxPrice": 12500,
+      "shopName": "Supermarché Hayat Cocody",
+      "createdAt": "..."
+    }
+  ]
+}
+```
+
+> Recommandation : charger uniquement les abus (`onlyAbus=true`) par défaut pour limiter le volume de données. Laisser l'utilisateur désactiver le filtre.
+
+---
+
+### Étape 8 — Historique personnel
+
+```
+GET /api/reports/mine?page=1   [Auth]
+```
+
+Retourne les signalements de l'utilisateur connecté, paginés (20/page), triés du plus récent au plus ancien.
+
+---
+
+### Étape 9 — Notifications
+
+**Réception push (Flutter)**
+```dart
+FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+  // Notification reçue en foreground
+  // message.data contient : type, reportId, lat, lng
+});
+```
+
+**Récupérer les notifications en-app**
+```
+GET /api/notifications   [Auth]
+```
+```json
+{
+  "notifications": [
+    {
+      "id": "...",
+      "title": "Abus signalé près de vous",
+      "body": "Un nouveau signalement d'abus a été détecté dans votre quartier.",
+      "type": "ABUS_NEARBY",
+      "read": false,
+      "data": { "reportId": "...", "lat": "5.36", "lng": "-4.00" },
+      "createdAt": "..."
+    }
+  ]
+}
+```
+
+**Marquer toutes comme lues**
+```
+PATCH /api/notifications/read   [Auth]
+→ { "updated": 3 }
+```
+
+**Types de notifications**
+
+| Type | Déclencheur |
+|------|-------------|
+| `ABUS_NEARBY` | Un abus signalé dans un rayon de 5 km autour de l'utilisateur |
+| `REPORT_CONFIRMED` | 3, 5 ou 10 personnes ont confirmé le même abus dans un rayon de 2 km |
+
+---
+
+### Résumé — endpoints mobile (15 routes)
+
+```
+POST  /api/auth/register                    ← inscription
+POST  /api/auth/login                       ← connexion
+GET   /api/auth/me                [Auth]    ← profil connecté
+
+GET   /api/products                         ← catalogue (démarrage)
+GET   /api/official-prices/active           ← prix plafond (démarrage) ?zone=ABIDJAN_30KM
+
+GET   /api/prices/summary                   ← résumé prix locaux ?packagingId= &lat= &lng= &radius=
+GET   /api/prices/history                   ← tendance hebdo ?packagingId= &lat= &lng= &radius=
+
+POST  /api/reports                [Auth]    ← signaler ou confirmer un prix [Rate limit]
+GET   /api/reports/mine           [Auth]    ← mes signalements ?page=
+GET   /api/reports/map                      ← carte ?onlyAbus=true|false
+
+GET   /api/gamification/me        [Auth]    ← points, niveau, badges
+GET   /api/leaderboard                      ← classement ?period=week|month
+
+POST  /api/notifications/token    [Auth]    ← enregistrer token FCM
+GET   /api/notifications          [Auth]    ← lister les notifications
+PATCH /api/notifications/read     [Auth]    ← marquer tout comme lu
 ```
 
 ---
@@ -618,7 +1004,7 @@ period,zone,category,product_name,packaging_label,max_price
 | Action | Endpoint | Description |
 |--------|----------|-------------|
 | Lister tous les signalements | `GET /api/admin/reports` | Paginé (50/page), filtrable par statut |
-| Filtrer par statut | `GET /api/admin/reports?status=ABUS` | `CONFORME`, `ABUS`, `UNKNOWN` |
+| Filtrer par statut | `GET /api/admin/reports?status=ABUS` | `CONFORME`, `LIMITE`, `ABUS`, `UNKNOWN` |
 | Marquer utile | `PATCH /api/admin/reports/:id/flag` | `{ "isUseful": true }` → +5 pts bonus à l'auteur |
 | Marquer frauduleux | `PATCH /api/admin/reports/:id/flag` | `{ "isFraudulent": true }` |
 
@@ -667,7 +1053,8 @@ Ces routes publiques/citoyen sont également utiles pour un dashboard admin :
 | `citoyen2@prixklo.ci` | `password123` | CITIZEN |
 
 **Données seed incluses :**
-- 5 produits, 10 packagings, 10 prix officiels (bulletin Janvier 2025)
+- **131 produits**, 242 packagings, 242 prix officiels (bulletin réel Juin 2022 — source : prixplafond.gouv.ci)
+  - Catégories couvertes : Riz (91 marques), Sucre, Tomate concentrée, Pâtes alimentaires, Huile de palme, Viande de bœuf, Lait, Ciment
 - **20 signalements d'abus** géolocalisés dans 10 quartiers d'Abidjan (Cocody, Plateau, Yopougon, Abobo, Adjamé, Marcory, Koumassi, Treichville, Port-Bouët, Attécoubé) — dont 14 avec nom d'enseigne
 
 ---
@@ -681,6 +1068,11 @@ Ces routes publiques/citoyen sont également utiles pour un dashboard admin :
 | `CLOUDINARY_CLOUD_NAME` | Non | Upload photo |
 | `CLOUDINARY_API_KEY` | Non | Upload photo |
 | `CLOUDINARY_API_SECRET` | Non | Upload photo |
+| `FIREBASE_PROJECT_ID` | Non* | Notifications push FCM |
+| `FIREBASE_PRIVATE_KEY` | Non* | Notifications push FCM |
+| `FIREBASE_CLIENT_EMAIL` | Non* | Notifications push FCM |
+
+> *Requis pour activer les notifications push. Obtenir depuis : Firebase Console → Project Settings → Service Accounts → Generate new private key
 
 ---
 
