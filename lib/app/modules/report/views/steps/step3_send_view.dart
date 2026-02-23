@@ -46,6 +46,39 @@ class Step3SendView extends GetView<ReportController> {
             );
           }),
           const SizedBox(height: 20),
+          // Type de signalement
+          const Text(
+            'Type de signalement',
+            style: TextStyle(
+                fontWeight: FontWeight.w700, color: AppColors.neutral100),
+          ),
+          const SizedBox(height: 8),
+          Obx(() => SegmentedButton<String>(
+                segments: const [
+                  ButtonSegment(
+                    value: 'SIGNALEMENT',
+                    icon: Icon(Icons.flag_outlined),
+                    label: Text('Nouveau'),
+                  ),
+                  ButtonSegment(
+                    value: 'CONFIRMATION',
+                    icon: Icon(Icons.check_circle_outline),
+                    label: Text('Confirmation'),
+                  ),
+                ],
+                selected: {controller.reportType.value},
+                onSelectionChanged: (s) =>
+                    controller.reportType.value = s.first,
+              )),
+          const SizedBox(height: 6),
+          Obx(() => Text(
+                controller.reportType.value == 'CONFIRMATION'
+                    ? 'Vous confirmez un prix déjà signalé par d\'autres (+3 pts).'
+                    : 'Vous observez ce prix pour la première fois ici.',
+                style: const TextStyle(
+                    fontSize: 12, color: AppColors.neutral60),
+              )),
+          const SizedBox(height: 20),
           // Nom de l'enseigne
           const Text(
             'Nom de l\'enseigne (optionnel)',
@@ -130,9 +163,11 @@ class Step3SendView extends GetView<ReportController> {
                             strokeWidth: 2, color: Colors.white),
                       )
                     : const Icon(Icons.send_rounded),
-                label: Text(controller.isSubmitting.value
+                label: Obx(() => Text(controller.isSubmitting.value
                     ? 'Envoi en cours...'
-                    : 'Signaler maintenant'),
+                    : controller.reportType.value == 'CONFIRMATION'
+                        ? 'Confirmer ce prix'
+                        : 'Signaler maintenant')),
               )),
         ],
       ),

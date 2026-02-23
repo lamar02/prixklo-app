@@ -24,23 +24,23 @@ class OnboardingController extends GetxController {
 
   final List<OnboardingPage> pages = const [
     OnboardingPage(
-      title: 'Vérifie les prix\nautour de toi',
+      title: 'Vérifiez avant\nd\'acheter',
       subtitle:
-          'Consultez les prix officiels et signalez les abus dans votre quartier.',
+          'Scannez le prix d\'un produit, comparez avec le plafond officiel et sachez immédiatement si vous payez trop cher.',
       emoji: '🔍',
       color: Color(0xFFF97316),
     ),
     OnboardingPage(
-      title: 'Signale en\n30 secondes',
+      title: 'Signalez les abus\nen 30 secondes',
       subtitle:
-          'Choisissez le produit, entrez le prix observé, envoyez. C\'est tout.',
-      emoji: '⚡',
+          'Un prix trop élevé ? Entrez le montant, confirmez votre position, envoyez. Votre signalement protège tout votre quartier.',
+      emoji: '🚨',
       color: Color(0xFF1E3A5F),
     ),
     OnboardingPage(
-      title: 'Gagne des points\nen aidant ta communauté',
+      title: 'Ensemble,\non change les prix',
       subtitle:
-          'Chaque signalement rapporte des points et débloque des badges.',
+          'Chaque signalement informe des dizaines de voisins. Gagnez des points, débloquez des badges, et devenez le héros de votre communauté.',
       emoji: '🏆',
       color: Color(0xFF16A34A),
     ),

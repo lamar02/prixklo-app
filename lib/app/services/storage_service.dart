@@ -7,6 +7,8 @@ class StorageService extends GetxService {
   static const _tokenKey = 'auth_token';
   static const _onboardingKey = 'onboarding_done';
   static const _pendingReportsKey = 'pending_reports';
+  static const _officialPricesKey = 'official_prices_json';
+  static const _bulletinIdKey = 'cached_bulletin_id';
 
   /// Nombre de signalements en attente d'envoi (observable)
   final RxInt pendingCount = 0.obs;
@@ -34,4 +36,14 @@ class StorageService extends GetxService {
     await _prefs.setStringList(_pendingReportsKey, list);
     pendingCount.value = list.length;
   }
+
+  // Cache prix officiels + bulletin
+  String? get cachedOfficialPricesJson => _prefs.getString(_officialPricesKey);
+  String? get cachedBulletinId => _prefs.getString(_bulletinIdKey);
+
+  Future<void> cacheOfficialPrices(String json) =>
+      _prefs.setString(_officialPricesKey, json);
+
+  Future<void> cacheBulletinId(String id) =>
+      _prefs.setString(_bulletinIdKey, id);
 }

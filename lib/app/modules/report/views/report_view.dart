@@ -15,7 +15,10 @@ class ReportView extends GetView<ReportController> {
     return Obx(() {
       // Afficher le résultat en plein écran si disponible
       if (controller.submissionResult.value != null) {
-        return ReportResultSheet(result: controller.submissionResult.value!);
+        return ReportResultSheet(
+          result: controller.submissionResult.value!,
+          isConfirmation: controller.reportType.value == 'CONFIRMATION',
+        );
       }
 
       return Scaffold(

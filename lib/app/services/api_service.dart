@@ -45,6 +45,8 @@ class ApiService extends GetConnect {
   Future<Response> getActivePrices({String zone = 'ABIDJAN_30KM'}) =>
       get('/official-prices/active', query: {'zone': zone});
 
+  Future<Response> getActiveBulletin() => get('/bulletins/active');
+
   // ── Signalements ─────────────────────────────────────────
   Future<Response> createReport(Map<String, dynamic> body) =>
       post('/reports', body);
@@ -73,4 +75,34 @@ class ApiService extends GetConnect {
         '/leaderboard',
         query: period != null ? {'period': period} : {},
       );
+
+  // ── Prix locaux ───────────────────────────────────────────
+  Future<Response> getPriceSummary({
+    required String packagingId,
+    required double lat,
+    required double lng,
+    int radius = 5,
+  }) =>
+      get('/prices/summary', query: {
+        'packagingId': packagingId,
+        'lat': lat.toString(),
+        'lng': lng.toString(),
+        'radius': radius.toString(),
+      });
+
+  Future<Response> getPriceHistory({
+    required String packagingId,
+    required double lat,
+    required double lng,
+  }) =>
+      get('/prices/history', query: {
+        'packagingId': packagingId,
+        'lat': lat.toString(),
+        'lng': lng.toString(),
+      });
+
+  // ── Notifications ─────────────────────────────────────────
+  Future<Response> getNotifications() => get('/notifications');
+
+  Future<Response> markNotificationsRead() => patch('/notifications/read', {});
 }

@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../data/models/map_marker_model.dart';
+import '../../../modules/notifications/controllers/notifications_controller.dart';
+import '../../../routes/app_routes.dart';
 import '../controllers/home_controller.dart';
 
 class HomeView extends GetView<HomeController> {
@@ -39,6 +41,21 @@ class HomeView extends GetView<HomeController> {
                         ),
                       ],
                     )),
+                actions: [
+                  Obx(() {
+                    final notifCtrl = Get.find<NotificationsController>();
+                    final count = notifCtrl.unreadCount;
+                    return IconButton(
+                      onPressed: () =>
+                          Get.toNamed(AppRoutes.notifications),
+                      icon: Badge(
+                        isLabelVisible: count > 0,
+                        label: Text(count > 9 ? '9+' : '$count'),
+                        child: const Icon(Icons.notifications_outlined),
+                      ),
+                    );
+                  }),
+                ],
               ),
               SliverToBoxAdapter(
                 child: Padding(
@@ -46,15 +63,62 @@ class HomeView extends GetView<HomeController> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Bloc gamification
-                      _GamificationCard(controller: controller),
-                      const SizedBox(height: 16),
-                      // CTA Signaler
-                      ElevatedButton.icon(
-                        onPressed: controller.goToReport,
-                        icon: const Icon(Icons.add_circle_outline),
-                        label: const Text('Signaler un prix'),
+                      // ── Barre de recherche principale ──────
+                      GestureDetector(
+                        onTap: () => Get.toNamed(AppRoutes.priceCheck),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 14),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                                color: AppColors.primary, width: 1.5),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primary.withAlpha(20),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.search,
+                                  color: AppColors.primary, size: 22),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Vérifier le prix d\'un produit…',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: AppColors.neutral60,
+                                  ),
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Text(
+                                  'Vérifier',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
+                      const SizedBox(height: 16),
+                      // ── Gamification ────────────────────────
+                      _GamificationCard(controller: controller),
                       const SizedBox(height: 24),
                       const Text(
                         'Abus récents près de toi',
@@ -112,6 +176,7 @@ class HomeView extends GetView<HomeController> {
       ),
     );
   }
+
 }
 
 class _GamificationCard extends StatelessWidget {
@@ -223,3 +288,4 @@ class _AbuseCard extends StatelessWidget {
     );
   }
 }
+

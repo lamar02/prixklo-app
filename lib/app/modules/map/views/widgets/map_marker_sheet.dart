@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../data/models/map_marker_model.dart';
+import '../../../../modules/main_nav/controllers/main_nav_controller.dart';
+import '../../../../modules/report/controllers/report_controller.dart';
 
 class MapMarkerSheet extends StatelessWidget {
   final MapMarkerModel marker;
@@ -94,9 +97,53 @@ class MapMarkerSheet extends StatelessWidget {
             style: const TextStyle(fontSize: 12, color: AppColors.neutral60),
           ),
           const SizedBox(height: 16),
+          // ── CTAs ───────────────────────────────────────────
+          if (marker.packagingId != null)
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _launchReport('CONFIRMATION'),
+                    icon: const Icon(Icons.check_circle_outline, size: 16),
+                    label: const Text('Confirmer ce prix'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.success,
+                      side: const BorderSide(color: AppColors.success),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => _launchReport('SIGNALEMENT'),
+                    icon: const Icon(Icons.warning_rounded, size: 16),
+                    label: const Text('Signaler ici'),
+                  ),
+                ),
+              ],
+            ),
+          const SizedBox(height: 8),
         ],
       ),
     );
+  }
+
+  void _launchReport(String type) {
+    final reportCtrl = Get.find<ReportController>();
+    // Cherche le packaging dans le catalogue déjà chargé
+    for (final product in reportCtrl.products) {
+      for (final pkg in product.packagings) {
+        if (pkg.id == marker.packagingId) {
+          reportCtrl.preSelect(product, pkg, type: type);
+          Get.find<MainNavController>().goToReport();
+          Get.back(); // ferme le bottom sheet
+          return;
+        }
+      }
+    }
+    // Fallback : ouvre simplement l'onglet signaler sans pré-remplissage
+    Get.find<MainNavController>().goToReport();
+    Get.back();
   }
 }
 

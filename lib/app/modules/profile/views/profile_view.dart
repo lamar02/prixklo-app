@@ -141,6 +141,54 @@ class ProfileView extends GetView<ProfileController> {
                 ),
               ),
               const SizedBox(height: 16),
+              // ── Métriques d'impact ──────────────────────
+              Obx(() => Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.neutral20),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Mon impact',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.neutral100,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            _ImpactStat(
+                              emoji: '📢',
+                              value:
+                                  '${controller.totalReports.value}',
+                              label: 'signalements',
+                            ),
+                            const SizedBox(width: 12),
+                            _ImpactStat(
+                              emoji: '👥',
+                              value:
+                                  '~${controller.peopleInformed}',
+                              label: 'personnes informées',
+                            ),
+                            const SizedBox(width: 12),
+                            _ImpactStat(
+                              emoji: '✅',
+                              value:
+                                  '${controller.confirmationsCount.value}',
+                              label: 'confirmations',
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  )),
+              const SizedBox(height: 16),
               // Signalements en attente
               Obx(() {
                 final count = controller.pendingCount.value;
@@ -265,6 +313,40 @@ class ProfileView extends GetView<ProfileController> {
           ),
         );
       }),
+    );
+  }
+}
+
+class _ImpactStat extends StatelessWidget {
+  final String emoji;
+  final String value;
+  final String label;
+  const _ImpactStat(
+      {required this.emoji, required this.value, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 22)),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: AppColors.neutral100,
+            ),
+          ),
+          Text(
+            label,
+            style: const TextStyle(
+                fontSize: 10, color: AppColors.neutral60),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 }

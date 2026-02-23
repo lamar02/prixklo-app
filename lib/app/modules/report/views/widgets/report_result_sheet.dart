@@ -1,12 +1,21 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../data/models/report_model.dart';
+import '../../../../routes/app_routes.dart';
 import '../../controllers/report_controller.dart';
 
 class ReportResultSheet extends StatefulWidget {
   final ReportModel result;
-  const ReportResultSheet({super.key, required this.result});
+  final bool isConfirmation;
+
+  const ReportResultSheet({
+    super.key,
+    required this.result,
+    this.isConfirmation = false,
+  });
 
   @override
   State<ReportResultSheet> createState() => _ReportResultSheetState();
@@ -16,6 +25,7 @@ class _ReportResultSheetState extends State<ReportResultSheet>
     with SingleTickerProviderStateMixin {
   late final AnimationController _anim;
   late final Animation<double> _scale;
+  Timer? _dismissTimer;
 
   @override
   void initState() {
@@ -24,10 +34,15 @@ class _ReportResultSheetState extends State<ReportResultSheet>
         vsync: this, duration: const Duration(milliseconds: 600));
     _scale = CurvedAnimation(parent: _anim, curve: Curves.elasticOut);
     _anim.forward();
+    // Auto-dismiss après 4 secondes
+    _dismissTimer = Timer(const Duration(seconds: 4), () {
+      if (mounted) Get.find<ReportController>().resetWizard();
+    });
   }
 
   @override
   void dispose() {
+    _dismissTimer?.cancel();
     _anim.dispose();
     super.dispose();
   }
@@ -36,6 +51,7 @@ class _ReportResultSheetState extends State<ReportResultSheet>
   Widget build(BuildContext context) {
     final isAbus = widget.result.status == 'ABUS';
     final isUnknown = widget.result.status == 'UNKNOWN';
+    final isLimite = widget.result.status == 'LIMITE';
 
     final color = isAbus
         ? AppColors.abus
@@ -47,16 +63,22 @@ class _ReportResultSheetState extends State<ReportResultSheet>
         : isUnknown
             ? '❓'
             : '✅';
-    final label = isAbus
-        ? 'Abus détecté'
-        : isUnknown
-            ? 'Statut inconnu'
-            : 'Prix conforme';
-    final pointsLabel = isAbus
-        ? '+10 points gagnés !'
-        : isUnknown
-            ? '+2 points gagnés !'
-            : '+5 points gagnés !';
+    final label = widget.isConfirmation
+        ? 'Confirmation enregistrée'
+        : isAbus
+            ? 'Abus détecté'
+            : isUnknown
+                ? 'Statut inconnu'
+                : 'Prix conforme';
+    final pointsLabel = widget.isConfirmation
+        ? '+3 points gagnés !'
+        : isAbus
+            ? '+10 points gagnés !'
+            : isLimite
+                ? '+7 points gagnés !'
+                : isUnknown
+                    ? '+2 points gagnés !'
+                    : '+5 points gagnés !';
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -154,10 +176,42 @@ class _ReportResultSheetState extends State<ReportResultSheet>
                   ],
                 ),
               ),
+              if (widget.isConfirmation) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withAlpha(20),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                        color: AppColors.success.withAlpha(60)),
+                  ),
+                  child: const Text(
+                    '✔ Confirmation — +3 pts bonus',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.success,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: 32),
               ElevatedButton(
                 onPressed: Get.find<ReportController>().resetWizard,
-                child: const Text('Nouveau signalement'),
+                child: Text(widget.isConfirmation
+                    ? 'Nouvelle confirmation'
+                    : 'Nouveau signalement'),
+              ),
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                onPressed: () {
+                  Get.find<ReportController>().resetWizard();
+                  Get.toNamed(AppRoutes.priceCheck);
+                },
+                icon: const Icon(Icons.search_outlined),
+                label: const Text('Retour à la vérification'),
               ),
               const SizedBox(height: 10),
               OutlinedButton.icon(
