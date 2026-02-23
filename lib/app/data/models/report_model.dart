@@ -25,7 +25,7 @@ class ReportModel {
     final packaging = j['packaging'] as Map<String, dynamic>? ?? {};
     final product = packaging['product'] as Map<String, dynamic>? ?? {};
     return ReportModel(
-      id: j['id'] as String,
+      id: j['id'] as String? ?? '',
       status: j['status'] as String? ?? 'UNKNOWN',
       observedPrice: (j['observedPrice'] as num?)?.toDouble() ?? 0,
       maxPrice: (j['maxPrice'] as num?)?.toDouble(),

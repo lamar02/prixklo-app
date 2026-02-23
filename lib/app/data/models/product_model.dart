@@ -5,8 +5,8 @@ class PackagingModel {
   const PackagingModel({required this.id, required this.label});
 
   factory PackagingModel.fromJson(Map<String, dynamic> j) => PackagingModel(
-        id: j['id'] as String,
-        label: j['label'] as String,
+        id: j['id'] as String? ?? '',
+        label: j['label'] as String? ?? '',
       );
 }
 
@@ -24,9 +24,9 @@ class ProductModel {
   });
 
   factory ProductModel.fromJson(Map<String, dynamic> j) => ProductModel(
-        id: j['id'] as String,
-        name: j['name'] as String,
-        category: j['category'] as String,
+        id: j['id'] as String? ?? '',
+        name: j['name'] as String? ?? '',
+        category: j['category'] as String? ?? '',
         packagings: (j['packagings'] as List? ?? [])
             .map((p) => PackagingModel.fromJson(p as Map<String, dynamic>))
             .toList(),

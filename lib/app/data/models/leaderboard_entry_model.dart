@@ -17,7 +17,7 @@ class LeaderboardEntryModel {
 
   factory LeaderboardEntryModel.fromJson(Map<String, dynamic> j) =>
       LeaderboardEntryModel(
-        id: j['id'] as String,
+        id: j['id'] as String? ?? '',
         name: j['name'] as String? ?? j['email'] as String? ?? '',
         email: j['email'] as String? ?? '',
         points: (j['points'] as num?)?.toInt() ?? 0,

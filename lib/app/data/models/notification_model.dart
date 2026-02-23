@@ -19,9 +19,9 @@ class NotificationModel {
 
   factory NotificationModel.fromJson(Map<String, dynamic> j) =>
       NotificationModel(
-        id: j['id'] as String,
-        title: j['title'] as String,
-        body: j['body'] as String,
+        id: j['id'] as String? ?? '',
+        title: j['title'] as String? ?? '',
+        body: j['body'] as String? ?? '',
         type: j['type'] as String? ?? '',
         read: j['read'] as bool? ?? false,
         data: (j['data'] as Map<String, dynamic>?) ?? {},
