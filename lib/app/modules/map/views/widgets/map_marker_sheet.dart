@@ -12,7 +12,12 @@ class MapMarkerSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isAbus = marker.status == 'ABUS';
+    final (Color statusColor, String statusLabel) = switch (marker.status) {
+      'ABUS' => (AppColors.abus, '🚨 ABUS'),
+      'CONFORME' => (AppColors.success, '✅ CONFORME'),
+      'LIMITE' => (AppColors.primary, '⚠️ LIMITE'),
+      _ => (AppColors.unknown, '❓ INCONNU'),
+    };
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -36,14 +41,13 @@ class MapMarkerSheet extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color:
-                      (isAbus ? AppColors.abus : AppColors.success).withAlpha(25),
+                  color: statusColor.withAlpha(25),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  isAbus ? '🚨 ABUS' : '✅ CONFORME',
+                  statusLabel,
                   style: TextStyle(
-                    color: isAbus ? AppColors.abus : AppColors.success,
+                    color: statusColor,
                     fontWeight: FontWeight.w700,
                     fontSize: 13,
                   ),
@@ -81,7 +85,7 @@ class MapMarkerSheet extends StatelessWidget {
               _PriceInfo(
                 label: 'Prix observé',
                 value: '${marker.observedPrice.toStringAsFixed(0)} FCFA',
-                color: isAbus ? AppColors.abus : AppColors.success,
+                color: statusColor,
               ),
               const SizedBox(width: 24),
               _PriceInfo(
@@ -97,30 +101,15 @@ class MapMarkerSheet extends StatelessWidget {
             style: const TextStyle(fontSize: 12, color: AppColors.neutral60),
           ),
           const SizedBox(height: 16),
-          // ── CTAs ───────────────────────────────────────────
+          // ── CTA ────────────────────────────────────────────
           if (marker.packagingId != null)
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => _launchReport('CONFIRMATION'),
-                    icon: const Icon(Icons.check_circle_outline, size: 16),
-                    label: const Text('Confirmer ce prix'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.success,
-                      side: const BorderSide(color: AppColors.success),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () => _launchReport('SIGNALEMENT'),
-                    icon: const Icon(Icons.warning_rounded, size: 16),
-                    label: const Text('Signaler ici'),
-                  ),
-                ),
-              ],
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _launchReport,
+                icon: const Icon(Icons.flag_outlined, size: 16),
+                label: const Text('Signaler ce produit ici'),
+              ),
             ),
           const SizedBox(height: 8),
         ],
@@ -128,20 +117,18 @@ class MapMarkerSheet extends StatelessWidget {
     );
   }
 
-  void _launchReport(String type) {
+  void _launchReport() {
     final reportCtrl = Get.find<ReportController>();
-    // Cherche le packaging dans le catalogue déjà chargé
     for (final product in reportCtrl.products) {
       for (final pkg in product.packagings) {
         if (pkg.id == marker.packagingId) {
-          reportCtrl.preSelect(product, pkg, type: type);
+          reportCtrl.preSelect(product, pkg);
           Get.find<MainNavController>().goToReport();
-          Get.back(); // ferme le bottom sheet
+          Get.back();
           return;
         }
       }
     }
-    // Fallback : ouvre simplement l'onglet signaler sans pré-remplissage
     Get.find<MainNavController>().goToReport();
     Get.back();
   }

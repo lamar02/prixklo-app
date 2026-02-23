@@ -283,6 +283,9 @@ class ReportController extends GetxController {
         Get.snackbar('Erreur', 'Envoi échoué. Réessayez.',
             snackPosition: SnackPosition.BOTTOM);
       }
+    } catch (_) {
+      Get.snackbar('Erreur', 'Problème de connexion. Réessayez.',
+          snackPosition: SnackPosition.BOTTOM);
     } finally {
       isSubmitting.value = false;
     }

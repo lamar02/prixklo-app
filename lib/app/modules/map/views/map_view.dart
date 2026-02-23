@@ -106,7 +106,12 @@ class MapView extends GetView<AppMapController> {
   }
 
   Marker _buildMarker(MapMarkerModel m) {
-    final isAbus = m.status == 'ABUS';
+    final (Color color, IconData icon) = switch (m.status) {
+      'ABUS' => (AppColors.abus, Icons.warning_rounded),
+      'CONFORME' => (AppColors.success, Icons.check_circle),
+      'LIMITE' => (AppColors.primary, Icons.info_rounded),
+      _ => (AppColors.unknown, Icons.help_outline),
+    };
     return Marker(
       point: LatLng(m.lat, m.lng),
       width: 36,
@@ -115,7 +120,7 @@ class MapView extends GetView<AppMapController> {
         onTap: () => controller.onMarkerTap(m),
         child: Container(
           decoration: BoxDecoration(
-            color: isAbus ? AppColors.abus : AppColors.success,
+            color: color,
             shape: BoxShape.circle,
             border: Border.all(color: Colors.white, width: 2),
             boxShadow: const [
@@ -125,11 +130,7 @@ class MapView extends GetView<AppMapController> {
                   offset: Offset(0, 2))
             ],
           ),
-          child: Icon(
-            isAbus ? Icons.warning_rounded : Icons.check_circle,
-            color: Colors.white,
-            size: 18,
-          ),
+          child: Icon(icon, color: Colors.white, size: 18),
         ),
       ),
     );

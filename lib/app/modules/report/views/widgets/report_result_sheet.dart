@@ -55,21 +55,27 @@ class _ReportResultSheetState extends State<ReportResultSheet>
 
     final color = isAbus
         ? AppColors.abus
-        : isUnknown
-            ? AppColors.unknown
-            : AppColors.success;
+        : isLimite
+            ? AppColors.primary
+            : isUnknown
+                ? AppColors.unknown
+                : AppColors.success;
     final emoji = isAbus
         ? '🚨'
-        : isUnknown
-            ? '❓'
-            : '✅';
+        : isLimite
+            ? '⚠️'
+            : isUnknown
+                ? '❓'
+                : '✅';
     final label = widget.isConfirmation
         ? 'Confirmation enregistrée'
         : isAbus
             ? 'Abus détecté'
-            : isUnknown
-                ? 'Statut inconnu'
-                : 'Prix conforme';
+            : isLimite
+                ? 'Prix à la limite'
+                : isUnknown
+                    ? 'Statut inconnu'
+                    : 'Prix conforme';
     final pointsLabel = widget.isConfirmation
         ? '+3 points gagnés !'
         : isAbus
