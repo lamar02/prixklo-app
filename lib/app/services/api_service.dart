@@ -102,12 +102,6 @@ class ApiService extends GetConnect {
       });
 
   // ── Notifications ─────────────────────────────────────────
-  Future<Response> registerFcmToken({
-    required String token,
-    required String platform,
-  }) =>
-      post('/notifications/token', {'token': token, 'platform': platform});
-
   Future<Response> getNotifications() => get('/notifications');
 
   Future<Response> markNotificationsRead() => patch('/notifications/read', {});
