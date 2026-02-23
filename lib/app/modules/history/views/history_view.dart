@@ -49,27 +49,25 @@ class HistoryView extends GetView<HistoryController> {
                 );
               }
               final report = controller.reports[i];
-              final isAbus = report.status == 'ABUS';
+              final (Color statusColor, String statusEmoji) = switch (report.status) {
+                'ABUS' => (AppColors.abus, '🚨'),
+                'CONFORME' => (AppColors.success, '✅'),
+                'LIMITE' => (AppColors.primary, '⚠️'),
+                _ => (AppColors.unknown, '❓'),
+              };
               return Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
                   borderRadius: BorderRadius.circular(12),
                   border: Border(
-                    left: BorderSide(
-                      color: isAbus
-                          ? AppColors.abus
-                          : report.status == 'CONFORME'
-                              ? AppColors.success
-                              : AppColors.unknown,
-                      width: 4,
-                    ),
+                    left: BorderSide(color: statusColor, width: 4),
                   ),
                 ),
                 child: Row(
                   children: [
                     Text(
-                      isAbus ? '🚨' : report.status == 'CONFORME' ? '✅' : '❓',
+                      statusEmoji,
                       style: const TextStyle(fontSize: 22),
                     ),
                     const SizedBox(width: 12),

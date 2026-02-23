@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../data/models/map_marker_model.dart';
+import '../../../modules/main_nav/controllers/main_nav_controller.dart';
 import '../../../modules/notifications/controllers/notifications_controller.dart';
 import '../../../routes/app_routes.dart';
 import '../controllers/home_controller.dart';
@@ -247,7 +248,9 @@ class _AbuseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GestureDetector(
+      onTap: () => Get.find<MainNavController>().goToMap(),
+      child: Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -285,6 +288,7 @@ class _AbuseCard extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }
