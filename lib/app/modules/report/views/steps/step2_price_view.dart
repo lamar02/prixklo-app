@@ -73,9 +73,60 @@ class _Step2PriceViewState extends State<Step2PriceView> {
               ),
             );
           }),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
+          // ── Prix plafond officiel ──────────────────────────
+          Obx(() {
+            final maxPrice = controller.effectiveMaxPrice;
+            if (maxPrice == null) return const SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 20),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withAlpha(12),
+                  borderRadius: BorderRadius.circular(12),
+                  border:
+                      Border.all(color: AppColors.primary.withAlpha(50)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(children: [
+                      const Icon(Icons.verified_outlined,
+                          size: 14, color: AppColors.primary),
+                      const SizedBox(width: 6),
+                      const Text(
+                        'Prix plafond officiel',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ]),
+                    const SizedBox(height: 6),
+                    Text(
+                      '${maxPrice.toStringAsFixed(0)} FCFA',
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    const Text(
+                      'Ne devrait pas dépasser ce montant',
+                      style: TextStyle(
+                          fontSize: 11, color: AppColors.neutral60),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
           const Text(
-            'Prix observé (FCFA)',
+            'Prix affiché en magasin (FCFA)',
             style: TextStyle(
                 fontWeight: FontWeight.w700, color: AppColors.neutral100),
           ),
@@ -89,10 +140,58 @@ class _Step2PriceViewState extends State<Step2PriceView> {
               hintText: '0',
               suffixText: 'FCFA',
               suffixStyle: TextStyle(color: AppColors.neutral60),
+              prefixIcon: Icon(Icons.storefront_outlined),
             ),
             onChanged: (v) =>
                 controller.observedPrice.value = double.tryParse(v) ?? 0,
           ),
+          // ── Bannière comparaison temps réel ───────────────
+          Obx(() {
+            final observed = controller.observedPrice.value;
+            if (observed <= 0) return const SizedBox.shrink();
+            final maxPrice = controller.effectiveMaxPrice;
+            if (maxPrice == null) return const SizedBox.shrink();
+            final isAbus = observed > maxPrice;
+            final diff = (observed - maxPrice).abs();
+            final pct = ((diff / maxPrice) * 100).toStringAsFixed(0);
+            final color = isAbus ? AppColors.abus : AppColors.success;
+            return Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: color.withAlpha(18),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: color.withAlpha(60)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      isAbus
+                          ? Icons.warning_rounded
+                          : Icons.check_circle_rounded,
+                      color: color,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        isAbus
+                            ? '🚨 +$pct% au-dessus du plafond — Abus probable'
+                            : '✅ Dans la limite du plafond — Prix conforme',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: color,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
           const SizedBox(height: 16),
           const _PriceSummaryCard(),
           const SizedBox(height: 16),

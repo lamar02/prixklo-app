@@ -46,38 +46,46 @@ class Step3SendView extends GetView<ReportController> {
             );
           }),
           const SizedBox(height: 20),
-          // Type de signalement
-          const Text(
-            'Type de signalement',
-            style: TextStyle(
-                fontWeight: FontWeight.w700, color: AppColors.neutral100),
-          ),
-          const SizedBox(height: 8),
-          Obx(() => SegmentedButton<String>(
-                segments: const [
-                  ButtonSegment(
-                    value: 'SIGNALEMENT',
-                    icon: Icon(Icons.flag_outlined),
-                    label: Text('Nouveau'),
+          // Type auto-déterminé (informatif, non modifiable)
+          Obx(() {
+            final isConfirmation =
+                controller.reportType.value == 'CONFIRMATION';
+            final color =
+                isConfirmation ? AppColors.success : AppColors.primary;
+            return Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: color.withAlpha(15),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: color.withAlpha(50)),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    isConfirmation
+                        ? Icons.check_circle_outline
+                        : Icons.flag_outlined,
+                    color: color,
+                    size: 18,
                   ),
-                  ButtonSegment(
-                    value: 'CONFIRMATION',
-                    icon: Icon(Icons.check_circle_outline),
-                    label: Text('Confirmation'),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      isConfirmation
+                          ? 'Confirmation d\'un prix existant dans la zone (+3 pts bonus)'
+                          : 'Nouveau signalement dans cette zone',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: color,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ],
-                selected: {controller.reportType.value},
-                onSelectionChanged: (s) =>
-                    controller.reportType.value = s.first,
-              )),
-          const SizedBox(height: 6),
-          Obx(() => Text(
-                controller.reportType.value == 'CONFIRMATION'
-                    ? 'Vous confirmez un prix déjà signalé par d\'autres (+3 pts).'
-                    : 'Vous observez ce prix pour la première fois ici.',
-                style: const TextStyle(
-                    fontSize: 12, color: AppColors.neutral60),
-              )),
+              ),
+            );
+          }),
           const SizedBox(height: 20),
           // Nom de l'enseigne
           const Text(
@@ -163,11 +171,14 @@ class Step3SendView extends GetView<ReportController> {
                             strokeWidth: 2, color: Colors.white),
                       )
                     : const Icon(Icons.send_rounded),
-                label: Obx(() => Text(controller.isSubmitting.value
-                    ? 'Envoi en cours...'
-                    : controller.reportType.value == 'CONFIRMATION'
-                        ? 'Confirmer ce prix'
-                        : 'Signaler maintenant')),
+                label: Obx(() {
+                  if (controller.isSubmitting.value) {
+                    return const Text('Envoi en cours...');
+                  }
+                  final isAbus = controller.observedPrice.value >
+                      (controller.effectiveMaxPrice ?? double.infinity);
+                  return Text(isAbus ? 'Signaler cet abus' : 'Envoyer');
+                }),
               )),
         ],
       ),

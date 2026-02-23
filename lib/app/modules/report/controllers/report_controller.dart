@@ -6,12 +6,14 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/utils/connectivity_util.dart';
 import '../../../data/models/gamification_model.dart';
+import '../../../data/models/official_price_model.dart';
 import '../../../data/models/price_history_model.dart';
 import '../../../data/models/price_summary_model.dart';
 import '../../../data/models/product_model.dart';
 import '../../../data/models/report_model.dart';
 import '../../../data/providers/offline_queue_model.dart';
 import '../../../modules/auth/controllers/auth_controller.dart';
+import '../../../modules/home/controllers/home_controller.dart';
 import '../../../modules/main_nav/controllers/main_nav_controller.dart';
 import '../../../services/api_service.dart';
 import '../../../services/storage_service.dart';
@@ -53,6 +55,22 @@ class ReportController extends GetxController {
   final RxString shopName = ''.obs;
   final RxString reportType = 'SIGNALEMENT'.obs; // 'SIGNALEMENT' | 'CONFIRMATION'
 
+  // ── Prix plafond officiel (sans GPS) ─────────────────────
+  OfficialPriceModel? get officialPrice {
+    final pkg = selectedPackaging.value;
+    if (pkg == null) return null;
+    try {
+      return Get.find<HomeController>()
+          .officialPrices
+          .firstWhere((p) => p.packagingId == pkg.id);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  double? get effectiveMaxPrice =>
+      officialPrice?.maxPrice ?? priceSummary.value?.officialMaxPrice;
+
   // ── Résumé des prix locaux ────────────────────────────────
   final Rx<PriceSummaryModel?> priceSummary = Rx<PriceSummaryModel?>(null);
   final RxBool loadingSummary = false.obs;
@@ -80,6 +98,11 @@ class ReportController extends GetxController {
       if (hasLocation.value && selectedPackaging.value != null) {
         _fetchPriceSummary();
       }
+    });
+    // Type auto-déterminé à partir du résumé communautaire
+    ever(priceSummary, (_) {
+      reportType.value =
+          (priceSummary.value?.count ?? 0) > 0 ? 'CONFIRMATION' : 'SIGNALEMENT';
     });
   }
 
