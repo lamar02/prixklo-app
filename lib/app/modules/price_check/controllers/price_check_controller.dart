@@ -195,16 +195,20 @@ class PriceCheckController extends GetxController {
     }
   }
 
+  /// Type déterminé automatiquement :
+  /// CONFIRMATION si des signalements existent déjà dans la zone, SIGNALEMENT sinon.
+  String get _autoType =>
+      (priceSummary.value?.count ?? 0) > 0 ? 'CONFIRMATION' : 'SIGNALEMENT';
+
   /// Pré-remplit le wizard et bascule sur l'onglet Signaler.
-  /// Si un prix observé est saisi, le wizard saute directement à l'étape GPS/Envoi.
-  void launchReport({required String type}) {
+  void launchReport() {
     final product = selectedProduct.value;
     final packaging = selectedPackaging.value;
     if (product == null || packaging == null) return;
     Get.find<ReportController>().preSelect(
       product,
       packaging,
-      type: type,
+      type: _autoType,
       observedPrice: observedPrice.value > 0 ? observedPrice.value : null,
     );
     Get.find<MainNavController>().goToReport();

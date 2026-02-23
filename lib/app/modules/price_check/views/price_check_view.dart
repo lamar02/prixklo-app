@@ -290,80 +290,50 @@ class _PackagingPanel extends StatelessWidget {
           }),
           // ── 5. Graphique de tendance (30 jours) ───────────
           _PriceHistoryChart(controller: controller),
-          // ── CTA dynamique ─────────────────────────────────
+          // ── CTA — visible uniquement si un prix est saisi ─────
           Obx(() {
             final pkg = controller.selectedPackaging.value;
             if (pkg == null) return const SizedBox.shrink();
 
             final observed = controller.observedPrice.value;
+            // Champ vide → aucun bouton
+            if (observed <= 0) return const SizedBox.shrink();
+
             final maxPrice = controller.effectiveMaxPrice;
 
-            // Prix pas encore saisi → 2 boutons neutres
-            if (observed <= 0 || maxPrice == null) {
-              return Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () =>
-                            controller.launchReport(type: 'CONFIRMATION'),
-                        icon: const Icon(Icons.check_circle_outline, size: 18),
-                        label: const Text('Confirmer'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.success,
-                          side: const BorderSide(color: AppColors.success),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () =>
-                            controller.launchReport(type: 'SIGNALEMENT'),
-                        icon: const Icon(Icons.warning_rounded, size: 18),
-                        label: const Text('Signaler'),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            final isAbus = observed > maxPrice;
-
-            // Prix > plafond → 1 seul bouton "Signaler cet abus"
-            if (isAbus) {
+            // Plafond inconnu → bouton neutre
+            if (maxPrice == null) {
               return Padding(
                 padding: const EdgeInsets.only(top: 12),
                 child: SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
-                    onPressed: () =>
-                        controller.launchReport(type: 'SIGNALEMENT'),
-                    icon: const Icon(Icons.warning_rounded, size: 18),
-                    label: const Text('Signaler cet abus'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.abus,
-                      foregroundColor: Colors.white,
-                    ),
+                    onPressed: controller.launchReport,
+                    icon: const Icon(Icons.send_rounded, size: 18),
+                    label: const Text('Envoyer le signalement'),
                   ),
                 ),
               );
             }
 
-            // Prix ≤ plafond → 1 seul bouton "Confirmer ce prix"
+            final isAbus = observed > maxPrice;
             return Padding(
               padding: const EdgeInsets.only(top: 12),
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () =>
-                      controller.launchReport(type: 'CONFIRMATION'),
-                  icon: const Icon(Icons.check_circle_outline, size: 18),
-                  label: const Text('Confirmer ce prix'),
+                  onPressed: controller.launchReport,
+                  icon: Icon(
+                    isAbus
+                        ? Icons.warning_rounded
+                        : Icons.check_circle_outline,
+                    size: 18,
+                  ),
+                  label: Text(
+                      isAbus ? 'Signaler cet abus' : 'Confirmer ce prix'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.success,
+                    backgroundColor:
+                        isAbus ? AppColors.abus : AppColors.success,
                     foregroundColor: Colors.white,
                   ),
                 ),
