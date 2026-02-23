@@ -3,6 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 
 import '../../../data/models/official_price_model.dart';
+import '../../../data/models/price_history_model.dart';
 import '../../../data/models/price_summary_model.dart';
 import '../../../data/models/product_model.dart';
 import '../../../modules/home/controllers/home_controller.dart';
@@ -61,6 +62,10 @@ class PriceCheckController extends GetxController {
   final Rx<PriceSummaryModel?> priceSummary = Rx<PriceSummaryModel?>(null);
   final RxBool loadingSummary = false.obs;
 
+  // ── Historique hebdomadaire (GPS requis) ──────────────────
+  final RxList<PriceHistoryEntry> priceHistory = <PriceHistoryEntry>[].obs;
+  final RxBool loadingHistory = false.obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -68,9 +73,14 @@ class PriceCheckController extends GetxController {
     _locateUser();
     ever(selectedPackaging, (_) {
       priceSummary.value = null;
+      priceHistory.value = [];
       _fetchSummaryIfReady();
+      _fetchHistoryIfReady();
     });
-    ever(hasLocation, (_) => _fetchSummaryIfReady());
+    ever(hasLocation, (_) {
+      _fetchSummaryIfReady();
+      _fetchHistoryIfReady();
+    });
   }
 
   Future<void> _loadProducts() async {
@@ -115,6 +125,7 @@ class PriceCheckController extends GetxController {
     selectedProduct.value = product;
     selectedPackaging.value = null;
     priceSummary.value = null;
+    priceHistory.value = [];
     observedPrice.value = 0;
     observedPriceCtrl.clear();
   }
@@ -123,6 +134,7 @@ class PriceCheckController extends GetxController {
     selectedProduct.value = null;
     selectedPackaging.value = null;
     priceSummary.value = null;
+    priceHistory.value = [];
     observedPrice.value = 0;
     observedPriceCtrl.clear();
   }
@@ -134,6 +146,12 @@ class PriceCheckController extends GetxController {
   void _fetchSummaryIfReady() {
     if (hasLocation.value && selectedPackaging.value != null) {
       _fetchPriceSummary();
+    }
+  }
+
+  void _fetchHistoryIfReady() {
+    if (hasLocation.value && selectedPackaging.value != null) {
+      _fetchPriceHistory();
     }
   }
 
@@ -153,6 +171,27 @@ class PriceCheckController extends GetxController {
       }
     } finally {
       loadingSummary.value = false;
+    }
+  }
+
+  Future<void> _fetchPriceHistory() async {
+    final pkg = selectedPackaging.value;
+    if (pkg == null || !hasLocation.value) return;
+    loadingHistory.value = true;
+    try {
+      final res = await _api.getPriceHistory(
+        packagingId: pkg.id,
+        lat: lat.value,
+        lng: lng.value,
+      );
+      if (res.isOk) {
+        final list = (res.body['history'] as List?) ?? [];
+        priceHistory.value = list
+            .map((e) => PriceHistoryEntry.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+    } finally {
+      loadingHistory.value = false;
     }
   }
 

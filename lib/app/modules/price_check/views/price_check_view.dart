@@ -1,3 +1,4 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -287,6 +288,8 @@ class _PackagingPanel extends StatelessWidget {
               child: _PriceSummaryCard(controller: controller),
             );
           }),
+          // ── 5. Graphique de tendance (30 jours) ───────────
+          _PriceHistoryChart(controller: controller),
           // ── CTA dynamique ─────────────────────────────────
           Obx(() {
             final pkg = controller.selectedPackaging.value;
@@ -596,5 +599,169 @@ class _Banner extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+// ── Graphique de tendance 30 jours ─────────────────────────────────────────
+
+class _PriceHistoryChart extends StatelessWidget {
+  final PriceCheckController controller;
+  const _PriceHistoryChart({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      if (!controller.hasLocation.value) return const SizedBox.shrink();
+
+      final history =
+          controller.priceHistory.where((e) => e.avg != null).toList();
+      if (history.isEmpty) return const SizedBox.shrink();
+
+      final maxPrice = controller.effectiveMaxPrice;
+      final avgValues = history.map((e) => e.avg!).toList();
+      final allValues = [...avgValues, ?maxPrice];
+      final dataMax = allValues.reduce((a, b) => a > b ? a : b);
+      final dataMin = allValues.reduce((a, b) => a < b ? a : b);
+      final padding = (dataMax - dataMin) * 0.15;
+      final chartMax = dataMax + padding;
+      final chartMin = (dataMin - padding).clamp(0, double.infinity);
+
+      return Padding(
+        padding: const EdgeInsets.only(top: 12),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(12, 14, 16, 10),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.neutral20),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.show_chart_rounded,
+                      size: 14, color: AppColors.primary),
+                  const SizedBox(width: 6),
+                  const Text(
+                    'Tendance des prix — 30 jours',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.neutral100,
+                    ),
+                  ),
+                  const Spacer(),
+                  if (maxPrice != null)
+                    Row(
+                      children: [
+                        Container(
+                            width: 12,
+                            height: 2,
+                            color: AppColors.abus.withAlpha(180)),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Plafond',
+                          style: TextStyle(
+                              fontSize: 9, color: AppColors.abus),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 90,
+                child: LineChart(
+                  LineChartData(
+                    gridData: FlGridData(
+                      show: true,
+                      drawVerticalLine: false,
+                      horizontalInterval:
+                          ((chartMax - chartMin) / 3).clamp(1, double.infinity),
+                      getDrawingHorizontalLine: (_) => FlLine(
+                        color: AppColors.neutral20,
+                        strokeWidth: 1,
+                      ),
+                    ),
+                    titlesData: FlTitlesData(
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          interval: 1,
+                          reservedSize: 18,
+                          getTitlesWidget: (value, _) {
+                            final idx = value.toInt();
+                            if (idx < 0 || idx >= history.length) {
+                              return const SizedBox.shrink();
+                            }
+                            final parts =
+                                history[idx].weekStart.split('-');
+                            if (parts.length < 3) {
+                              return const SizedBox.shrink();
+                            }
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Text(
+                                '${parts[2]}/${parts[1]}',
+                                style: const TextStyle(
+                                    fontSize: 8,
+                                    color: AppColors.neutral60),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      leftTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false)),
+                      topTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false)),
+                      rightTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false)),
+                    ),
+                    borderData: FlBorderData(show: false),
+                    minX: 0,
+                    maxX: (history.length - 1).toDouble(),
+                    minY: chartMin.toDouble(),
+                    maxY: chartMax,
+                    lineBarsData: [
+                      LineChartBarData(
+                        spots: history
+                            .asMap()
+                            .entries
+                            .map((e) =>
+                                FlSpot(e.key.toDouble(), e.value.avg!))
+                            .toList(),
+                        isCurved: true,
+                        color: AppColors.primary,
+                        barWidth: 2,
+                        dotData: FlDotData(
+                            show: history.length <= 5),
+                        belowBarData: BarAreaData(
+                          show: true,
+                          color: AppColors.primary.withAlpha(20),
+                        ),
+                      ),
+                    ],
+                    extraLinesData: maxPrice != null
+                        ? ExtraLinesData(
+                            horizontalLines: [
+                              HorizontalLine(
+                                y: maxPrice,
+                                color: AppColors.abus.withAlpha(180),
+                                strokeWidth: 1.5,
+                                dashArray: [6, 3],
+                              ),
+                            ],
+                          )
+                        : null,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    });
   }
 }
