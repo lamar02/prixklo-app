@@ -119,6 +119,14 @@ class PriceCheckController extends GetxController {
     observedPriceCtrl.clear();
   }
 
+  void clearSelection() {
+    selectedProduct.value = null;
+    selectedPackaging.value = null;
+    priceSummary.value = null;
+    observedPrice.value = 0;
+    observedPriceCtrl.clear();
+  }
+
   void selectPackaging(PackagingModel packaging) {
     selectedPackaging.value = packaging;
   }

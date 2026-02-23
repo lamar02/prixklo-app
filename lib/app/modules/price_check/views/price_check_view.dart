@@ -18,53 +18,70 @@ class PriceCheckView extends GetView<PriceCheckController> {
         backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
       ),
-      body: Column(
+      body: Stack(
         children: [
-          // ── Barre de recherche ─────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: TextField(
-              decoration: const InputDecoration(
-                hintText: 'Rechercher un produit…',
-                prefixIcon: Icon(Icons.search),
-              ),
-              onChanged: (v) => controller.searchQuery.value = v,
-            ),
-          ),
-          // ── Liste produits ─────────────────────────────────
-          Expanded(
-            child: Obx(() {
-              if (controller.productsLoading.value) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              final products = controller.filteredProducts;
-              if (products.isEmpty) {
-                return const Center(
-                  child: Text(
-                    'Aucun produit trouvé',
-                    style: TextStyle(color: AppColors.neutral60),
+          // ── Contenu principal (recherche + liste) ──────────
+          Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: TextField(
+                  decoration: const InputDecoration(
+                    hintText: 'Rechercher un produit…',
+                    prefixIcon: Icon(Icons.search),
                   ),
-                );
-              }
-              return ListView.builder(
-                itemCount: products.length,
-                itemBuilder: (_, i) =>
-                    _ProductTile(product: products[i], ctrl: controller),
-              );
-            }),
+                  onChanged: (v) => controller.searchQuery.value = v,
+                ),
+              ),
+              Expanded(
+                child: Obx(() {
+                  if (controller.productsLoading.value) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final products = controller.filteredProducts;
+                  if (products.isEmpty) {
+                    return const Center(
+                      child: Text(
+                        'Aucun produit trouvé',
+                        style: TextStyle(color: AppColors.neutral60),
+                      ),
+                    );
+                  }
+                  return ListView.builder(
+                    itemCount: products.length,
+                    itemBuilder: (_, i) =>
+                        _ProductTile(product: products[i], ctrl: controller),
+                  );
+                }),
+              ),
+            ],
           ),
-          // ── Panneau packaging + résumé + CTAs ─────────────
-          // Contraint à 55% de la hauteur d'écran + scrollable
+          // ── Overlay sombre — tap pour fermer ───────────────
+          Obx(() {
+            if (controller.selectedProduct.value == null) {
+              return const SizedBox.shrink();
+            }
+            return GestureDetector(
+              onTap: controller.clearSelection,
+              child: Container(color: Colors.black.withAlpha(140)),
+            );
+          }),
+          // ── Panneau packaging ancré en bas ─────────────────
           Obx(() {
             final product = controller.selectedProduct.value;
             if (product == null) return const SizedBox.shrink();
-            return ConstrainedBox(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.55,
-              ),
-              child: SingleChildScrollView(
-                child: _PackagingPanel(
-                    controller: controller, product: product),
+            return Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.58,
+                ),
+                child: SingleChildScrollView(
+                  child: _PackagingPanel(
+                      controller: controller, product: product),
+                ),
               ),
             );
           }),
@@ -270,36 +287,83 @@ class _PackagingPanel extends StatelessWidget {
               child: _PriceSummaryCard(controller: controller),
             );
           }),
-          // ── CTAs ─────────────────────────────────────────
+          // ── CTA dynamique ─────────────────────────────────
           Obx(() {
             final pkg = controller.selectedPackaging.value;
             if (pkg == null) return const SizedBox.shrink();
-            return Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () =>
-                          controller.launchReport(type: 'CONFIRMATION'),
-                      icon: const Icon(Icons.check_circle_outline, size: 18),
-                      label: const Text('Confirmer'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.success,
-                        side: const BorderSide(color: AppColors.success),
+
+            final observed = controller.observedPrice.value;
+            final maxPrice = controller.effectiveMaxPrice;
+
+            // Prix pas encore saisi → 2 boutons neutres
+            if (observed <= 0 || maxPrice == null) {
+              return Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () =>
+                            controller.launchReport(type: 'CONFIRMATION'),
+                        icon: const Icon(Icons.check_circle_outline, size: 18),
+                        label: const Text('Confirmer'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.success,
+                          side: const BorderSide(color: AppColors.success),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () =>
-                          controller.launchReport(type: 'SIGNALEMENT'),
-                      icon: const Icon(Icons.warning_rounded, size: 18),
-                      label: const Text('Signaler un abus'),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () =>
+                            controller.launchReport(type: 'SIGNALEMENT'),
+                        icon: const Icon(Icons.warning_rounded, size: 18),
+                        label: const Text('Signaler'),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            final isAbus = observed > maxPrice;
+
+            // Prix > plafond → 1 seul bouton "Signaler cet abus"
+            if (isAbus) {
+              return Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () =>
+                        controller.launchReport(type: 'SIGNALEMENT'),
+                    icon: const Icon(Icons.warning_rounded, size: 18),
+                    label: const Text('Signaler cet abus'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.abus,
+                      foregroundColor: Colors.white,
                     ),
                   ),
-                ],
+                ),
+              );
+            }
+
+            // Prix ≤ plafond → 1 seul bouton "Confirmer ce prix"
+            return Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () =>
+                      controller.launchReport(type: 'CONFIRMATION'),
+                  icon: const Icon(Icons.check_circle_outline, size: 18),
+                  label: const Text('Confirmer ce prix'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.success,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
               ),
             );
           }),
