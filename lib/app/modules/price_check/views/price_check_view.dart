@@ -304,7 +304,10 @@ class _PackagingPanel extends StatelessWidget {
                 child: SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
-                    onPressed: controller.launchReport,
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      controller.launchReport();
+                    },
                     icon: const Icon(Icons.send_rounded, size: 18),
                     label: const Text('Envoyer le signalement'),
                   ),
@@ -318,7 +321,10 @@ class _PackagingPanel extends StatelessWidget {
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: controller.launchReport,
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    controller.launchReport();
+                  },
                   icon: Icon(
                     isAbus
                         ? Icons.warning_rounded
