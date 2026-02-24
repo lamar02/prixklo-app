@@ -17,9 +17,15 @@ class ConnectivityService extends GetxService {
 
   Future<void> _check() async {
     try {
-      final result = await InternetAddress.lookup('prixklobackend.vercel.app')
-          .timeout(const Duration(seconds: 4));
-      isOnline.value = result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+      // Socket.connect fait un vrai handshake TCP — impossible à satisfaire
+      // depuis un cache DNS ou un WiFi capté sans internet.
+      final socket = await Socket.connect(
+        'prixklobackend.vercel.app',
+        443,
+        timeout: const Duration(seconds: 5),
+      );
+      socket.destroy();
+      isOnline.value = true;
     } catch (_) {
       isOnline.value = false;
     }
