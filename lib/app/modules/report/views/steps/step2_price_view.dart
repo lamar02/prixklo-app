@@ -14,20 +14,28 @@ class Step2PriceView extends StatefulWidget {
 
 class _Step2PriceViewState extends State<Step2PriceView> {
   late final TextEditingController _priceCtrl;
+  late final Worker _priceWorker;
 
   ReportController get controller => Get.find<ReportController>();
 
   @override
   void initState() {
     super.initState();
-    final currentPrice = Get.find<ReportController>().observedPrice.value;
+    final rc = Get.find<ReportController>();
+    final currentPrice = rc.observedPrice.value;
     _priceCtrl = TextEditingController(
       text: currentPrice > 0 ? currentPrice.toStringAsFixed(0) : '',
     );
+    // Sync textfield when price is reset externally (e.g., resetWizard)
+    _priceWorker = ever(rc.observedPrice, (v) {
+      final newText = v > 0 ? v.toStringAsFixed(0) : '';
+      if (_priceCtrl.text != newText) _priceCtrl.text = newText;
+    });
   }
 
   @override
   void dispose() {
+    _priceWorker.dispose();
     _priceCtrl.dispose();
     super.dispose();
   }
@@ -150,7 +158,7 @@ class _Step2PriceViewState extends State<Step2PriceView> {
             final observed = controller.observedPrice.value;
             if (observed <= 0) return const SizedBox.shrink();
             final maxPrice = controller.effectiveMaxPrice;
-            if (maxPrice == null) return const SizedBox.shrink();
+            if (maxPrice == null || maxPrice <= 0) return const SizedBox.shrink();
             final isAbus = observed > maxPrice;
             final diff = (observed - maxPrice).abs();
             final pct = ((diff / maxPrice) * 100).toStringAsFixed(0);

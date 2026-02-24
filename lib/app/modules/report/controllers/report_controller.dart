@@ -241,7 +241,7 @@ class ReportController extends GetxController {
     final online = await ConnectivityUtil.isOnline();
 
     if (!online) {
-      _enqueueOffline();
+      await _enqueueOffline();
       isSubmitting.value = false;
       Get.snackbar(
         'Hors ligne',
@@ -295,7 +295,7 @@ class ReportController extends GetxController {
     }
   }
 
-  void _enqueueOffline() {
+  Future<void> _enqueueOffline() async {
     final pending = PendingReport(
       packagingId: selectedPackaging.value!.id,
       observedPrice: observedPrice.value,
@@ -306,7 +306,7 @@ class ReportController extends GetxController {
     );
     final list = List<String>.from(_storage.pendingReports)
       ..add(pending.toEncodedString());
-    _storage.savePendingReports(list);
+    await _storage.savePendingReports(list);
   }
 
   Future<void> flushOfflineQueue() async {
