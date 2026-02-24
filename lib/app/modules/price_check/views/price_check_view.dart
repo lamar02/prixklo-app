@@ -13,79 +13,44 @@ class PriceCheckView extends GetView<PriceCheckController> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Text('Vérifier un prix'),
         backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
       ),
-      body: Stack(
+      body: Column(
         children: [
-          // ── Contenu principal (recherche + liste) ──────────
-          Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: TextField(
-                  decoration: const InputDecoration(
-                    hintText: 'Rechercher un produit…',
-                    prefixIcon: Icon(Icons.search),
-                  ),
-                  onChanged: (v) => controller.searchQuery.value = v,
-                ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: TextField(
+              decoration: const InputDecoration(
+                hintText: 'Rechercher un produit…',
+                prefixIcon: Icon(Icons.search),
               ),
-              Expanded(
-                child: Obx(() {
-                  if (controller.productsLoading.value) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  final products = controller.filteredProducts;
-                  if (products.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        'Aucun produit trouvé',
-                        style: TextStyle(color: AppColors.neutral60),
-                      ),
-                    );
-                  }
-                  return ListView.builder(
-                    itemCount: products.length,
-                    itemBuilder: (_, i) =>
-                        _ProductTile(product: products[i], ctrl: controller),
-                  );
-                }),
-              ),
-            ],
+              onChanged: (v) => controller.searchQuery.value = v,
+            ),
           ),
-          // ── Overlay sombre — tap pour fermer ───────────────
-          Obx(() {
-            if (controller.selectedProduct.value == null) {
-              return const SizedBox.shrink();
-            }
-            return GestureDetector(
-              onTap: controller.clearSelection,
-              child: Container(color: Colors.black.withAlpha(140)),
-            );
-          }),
-          // ── Panneau packaging ancré en bas ─────────────────
-          Obx(() {
-            final product = controller.selectedProduct.value;
-            if (product == null) return const SizedBox.shrink();
-            return Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.58,
-                ),
-                child: SingleChildScrollView(
-                  child: _PackagingPanel(
-                      controller: controller, product: product),
-                ),
-              ),
-            );
-          }),
+          Expanded(
+            child: Obx(() {
+              if (controller.productsLoading.value) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              final products = controller.filteredProducts;
+              if (products.isEmpty) {
+                return const Center(
+                  child: Text(
+                    'Aucun produit trouvé',
+                    style: TextStyle(color: AppColors.neutral60),
+                  ),
+                );
+              }
+              return ListView.builder(
+                itemCount: products.length,
+                itemBuilder: (_, i) =>
+                    _ProductTile(product: products[i], ctrl: controller),
+              );
+            }),
+          ),
         ],
       ),
     );
@@ -131,7 +96,27 @@ class _ProductTile extends StatelessWidget {
         trailing: selected
             ? const Icon(Icons.check_circle, color: AppColors.primary)
             : null,
-        onTap: () => ctrl.selectProduct(product),
+        onTap: () {
+          ctrl.selectProduct(product);
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            useSafeArea: true,
+            backgroundColor: AppColors.surface,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            builder: (ctx) => Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(ctx).viewInsets.bottom,
+              ),
+              child: SingleChildScrollView(
+                child: _PackagingPanel(
+                    controller: ctrl, product: product),
+              ),
+            ),
+          ).then((_) => ctrl.clearSelection());
+        },
       );
     });
   }
@@ -147,13 +132,24 @@ class _PackagingPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: AppColors.surface,
+    return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
+          // ── Drag handle ───────────────────────────────────
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.neutral20,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
           // ── Conditionnement ──────────────────────────────
           Text(
             'Conditionnement — ${product.name}',
