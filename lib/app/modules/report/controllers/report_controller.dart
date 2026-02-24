@@ -91,12 +91,14 @@ class ReportController extends GetxController {
       priceHistory.value = [];
       if (hasLocation.value && selectedPackaging.value != null) {
         _fetchPriceSummary();
+        fetchPriceHistory();
       }
     });
     // Déclenche le fetch si le GPS arrive après la sélection du packaging
     ever(hasLocation, (_) {
       if (hasLocation.value && selectedPackaging.value != null) {
         _fetchPriceSummary();
+        fetchPriceHistory();
       }
     });
     // Type auto-déterminé à partir du résumé communautaire
@@ -123,6 +125,8 @@ class ReportController extends GetxController {
   void selectProduct(ProductModel product) {
     selectedProduct.value = product;
     selectedPackaging.value = null;
+    // Démarrer le GPS tôt pour avoir le résumé dès le bottom sheet
+    if (!hasLocation.value && !isLocating.value) locateUser();
   }
 
   void selectPackaging(PackagingModel packaging) {
