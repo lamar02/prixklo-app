@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/animated_counter.dart';
 import '../controllers/profile_controller.dart';
 
 class ProfileView extends GetView<ProfileController> {
@@ -94,7 +95,7 @@ class ProfileView extends GetView<ProfileController> {
                             const Text('Points',
                                 style: TextStyle(
                                     color: Colors.white70, fontSize: 13)),
-                            _AnimatedCounter(
+                            AnimatedCounter(
                               value: controller.points.value,
                               style: const TextStyle(
                                 color: Colors.white,
@@ -346,67 +347,6 @@ class _ImpactStat extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
         ],
-      ),
-    );
-  }
-}
-
-// ── Compteur animé ─────────────────────────────────────────────────────────
-
-class _AnimatedCounter extends StatefulWidget {
-  final int value;
-  final TextStyle style;
-  const _AnimatedCounter({required this.value, required this.style});
-
-  @override
-  State<_AnimatedCounter> createState() => _AnimatedCounterState();
-}
-
-class _AnimatedCounterState extends State<_AnimatedCounter>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-  late Animation<double> _anim;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1400),
-    );
-    _anim = Tween<double>(begin: 0, end: widget.value.toDouble()).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic),
-    );
-    _ctrl.forward();
-  }
-
-  @override
-  void didUpdateWidget(_AnimatedCounter old) {
-    super.didUpdateWidget(old);
-    if (old.value != widget.value) {
-      final from = _anim.value;
-      _anim = Tween<double>(begin: from, end: widget.value.toDouble()).animate(
-        CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic),
-      );
-      _ctrl
-        ..reset()
-        ..forward();
-    }
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _anim,
-      builder: (_, _) => Text(
-        '${_anim.value.round()}',
-        style: widget.style,
       ),
     );
   }

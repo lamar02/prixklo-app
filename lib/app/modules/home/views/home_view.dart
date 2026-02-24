@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/widgets/animated_counter.dart';
 import '../../../data/models/map_marker_model.dart';
 import '../../../modules/main_nav/controllers/main_nav_controller.dart';
 import '../../../modules/notifications/controllers/notifications_controller.dart';
@@ -203,8 +204,9 @@ class _GamificationCard extends StatelessWidget {
                 children: [
                   const Text('Mes points',
                       style: TextStyle(color: Colors.white70, fontSize: 13)),
-                  Text(
-                    '${controller.points.value} pts',
+                  AnimatedCounter(
+                    value: controller.points.value,
+                    suffix: ' pts',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 28,
