@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "960829998290",
+    "project_id": "priklo",
+    "storage_bucket": "priklo.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:960829998290:android:a7d5fe04979a4659a1990b",
+        "android_client_info": {
+          "package_name": "ci.prixklo.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBA5eWxeoVHh7ww-VfS91_5mZmtlqMS6KE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
