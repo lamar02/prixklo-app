@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_theme.dart';
 import '../controllers/splash_controller.dart';
 
@@ -9,51 +11,45 @@ class SplashView extends GetView<SplashController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primary,
+      backgroundColor: Colors.white,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 90,
-              height: 90,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: const Center(
-                child: Text(
-                  'PK',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.primary,
-                  ),
-                ),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(28),
+              child: SvgPicture.asset(
+                'assets/logo/icon-pnga.svg',
+                width: 100,
+                height: 100,
               ),
             ),
-            const SizedBox(height: 20),
-            const Text(
+            const SizedBox(height: 24),
+            Text(
               'PrixKlo',
-              style: TextStyle(
-                fontSize: 32,
+              style: GoogleFonts.dmSans(
+                fontSize: 34,
                 fontWeight: FontWeight.w800,
-                color: Colors.white,
+                color: AppColors.secondary,
                 letterSpacing: -0.5,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               'Surveille les prix autour de toi',
-              style: TextStyle(
+              style: GoogleFonts.dmSans(
                 fontSize: 15,
-                color: Colors.white.withAlpha(200),
+                color: AppColors.neutral60,
               ),
             ),
-            const SizedBox(height: 60),
-            const CircularProgressIndicator(
-              color: Colors.white,
-              strokeWidth: 2,
+            const SizedBox(height: 64),
+            const SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(
+                color: AppColors.primary,
+                strokeWidth: 2.5,
+              ),
             ),
           ],
         ),
