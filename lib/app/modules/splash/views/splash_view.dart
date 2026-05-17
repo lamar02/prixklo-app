@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_theme.dart';
@@ -18,8 +17,8 @@ class SplashView extends GetView<SplashController> {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(28),
-              child: SvgPicture.asset(
-                'assets/logo/icon-pnga.svg',
+              child: Image.asset(
+                'assets/logo/app_icon.png',
                 width: 100,
                 height: 100,
               ),
