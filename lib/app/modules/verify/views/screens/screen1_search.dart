@@ -6,6 +6,7 @@ import '../../../../modules/auth/controllers/auth_controller.dart';
 import '../../../../modules/notifications/controllers/notifications_controller.dart';
 import '../../../../routes/app_routes.dart';
 import '../../controllers/verify_controller.dart';
+import '../widgets/packaging_sheet.dart';
 
 class Screen1Search extends GetView<VerifyController> {
   const Screen1Search({super.key});
@@ -205,7 +206,19 @@ class _ProductTile extends StatelessWidget {
         trailing: selected
             ? const Icon(Icons.check_circle, color: AppColors.primary)
             : null,
-        onTap: () => ctrl.selectProduct(product),
+        onTap: () {
+          ctrl.selectProduct(product);
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            useSafeArea: true,
+            backgroundColor: AppColors.surface,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            builder: (_) => const PackagingSheet(),
+          );
+        },
       );
     });
   }

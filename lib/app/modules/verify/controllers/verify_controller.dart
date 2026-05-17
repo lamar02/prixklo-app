@@ -109,6 +109,8 @@ class VerifyController extends GetxController {
 
   // ── Navigation ────────────────────────────────────────────
 
+  /// Sélectionne un produit et démarre le GPS silencieusement.
+  /// La navigation vers le sheet packaging est gérée dans la vue.
   void selectProduct(ProductModel product) {
     selectedProduct.value = product;
     selectedPackaging.value = null;
@@ -118,26 +120,26 @@ class VerifyController extends GetxController {
     submissionResult.value = null;
     priceSummary.value = null;
     if (!hasLocation.value && !isLocating.value) locateUser();
-    currentScreen.value = 1;
   }
 
   void selectPackaging(PackagingModel packaging) {
     selectedPackaging.value = packaging;
   }
 
+  // 0 = recherche, 1 = saisie prix
   void goToScreen(int screen) => currentScreen.value = screen;
 
   void goBack() {
     if (currentScreen.value > 0) currentScreen.value--;
   }
 
-  /// Pré-remplit depuis un marqueur carte et saute à l'écran prix.
+  /// Pré-remplit depuis un marqueur carte et saute directement à l'écran prix.
   void preSelect(ProductModel product, PackagingModel packaging) {
     resetFlow();
     selectedProduct.value = product;
     selectedPackaging.value = packaging;
     if (!hasLocation.value && !isLocating.value) locateUser();
-    currentScreen.value = 2;
+    currentScreen.value = 1;
   }
 
   // ── GPS ───────────────────────────────────────────────────

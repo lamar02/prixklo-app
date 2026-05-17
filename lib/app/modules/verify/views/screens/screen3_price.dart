@@ -73,7 +73,7 @@ class _Screen3PriceState extends State<Screen3Price> {
                   final pk = controller.selectedPackaging.value;
                   return Expanded(
                     child: GestureDetector(
-                      onTap: () => controller.goToScreen(1),
+                      onTap: () => controller.goToScreen(0),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 8),
