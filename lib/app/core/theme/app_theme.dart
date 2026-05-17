@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 abstract class AppColors {
-  static const primary = Color(0xFFF97316); // Orange vif
-  static const primaryDark = Color(0xFFEA6C0A);
+  static const primary = Color(0xFFDC2F02);
+  static const primaryDark = Color(0xFFBF2902);
   static const secondary = Color(0xFF1E3A5F); // Navy
   static const background = Color(0xFFF8F9FA);
   static const surface = Color(0xFFFFFFFF);
