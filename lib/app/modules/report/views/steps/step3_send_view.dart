@@ -103,9 +103,16 @@ class Step3SendView extends GetView<ReportController> {
           ),
           const SizedBox(height: 20),
           // GPS
-          const Text('Localisation',
-              style: TextStyle(
-                  fontWeight: FontWeight.w700, color: AppColors.neutral100)),
+          Row(
+            children: const [
+              Text('Localisation',
+                  style: TextStyle(
+                      fontWeight: FontWeight.w700, color: AppColors.neutral100)),
+              SizedBox(width: 6),
+              Text('(optionnel)',
+                  style: TextStyle(fontSize: 12, color: AppColors.neutral60)),
+            ],
+          ),
           const SizedBox(height: 8),
           Obx(() {
             if (controller.hasLocation.value) {
@@ -136,26 +143,31 @@ class Step3SendView extends GetView<ReportController> {
                 ),
               );
             }
+            if (controller.isLocating.value) {
+              return Row(
+                children: const [
+                  SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: AppColors.neutral60),
+                  ),
+                  SizedBox(width: 10),
+                  Text('Récupération GPS…',
+                      style:
+                          TextStyle(fontSize: 13, color: AppColors.neutral60)),
+                ],
+              );
+            }
             return OutlinedButton.icon(
-              onPressed: controller.isLocating.value
-                  ? null
-                  : controller.locateUser,
-              icon: controller.isLocating.value
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: AppColors.primary),
-                    )
-                  : const Icon(Icons.my_location),
-              label: Text(controller.isLocating.value
-                  ? 'Localisation en cours...'
-                  : 'Obtenir ma position'),
+              onPressed: controller.locateUser,
+              icon: const Icon(Icons.my_location),
+              label: const Text('Obtenir ma position'),
             );
           }),
           const SizedBox(height: 6),
           const Text(
-            'La localisation améliore la carte et la détection d\'abus.',
+            'La localisation améliore la carte. Vous pouvez envoyer sans attendre.',
             style: TextStyle(fontSize: 12, color: AppColors.neutral60),
           ),
           const SizedBox(height: 32),
@@ -175,9 +187,16 @@ class Step3SendView extends GetView<ReportController> {
                   if (controller.isSubmitting.value) {
                     return const Text('Envoi en cours...');
                   }
+                  if (!controller.hasLocation.value) {
+                    final isAbus = controller.observedPrice.value >
+                        (controller.effectiveMaxPrice ?? double.infinity);
+                    return Text(isAbus
+                        ? 'Signaler cet abus (sans GPS)'
+                        : 'Envoyer sans GPS');
+                  }
                   final isAbus = controller.observedPrice.value >
                       (controller.effectiveMaxPrice ?? double.infinity);
-                  return Text(isAbus ? 'Signaler cet abus' : 'Envoyer');
+                  return Text(isAbus ? 'Signaler cet abus' : 'Envoyer ✓');
                 }),
               )),
         ],
