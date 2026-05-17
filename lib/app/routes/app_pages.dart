@@ -10,8 +10,6 @@ import '../modules/main_nav/bindings/main_nav_binding.dart';
 import '../modules/main_nav/views/main_nav_view.dart';
 import '../modules/notifications/bindings/notifications_binding.dart';
 import '../modules/notifications/views/notifications_view.dart';
-import '../modules/price_check/bindings/price_check_binding.dart';
-import '../modules/price_check/views/price_check_view.dart';
 import '../modules/onboarding/bindings/onboarding_binding.dart';
 import '../modules/onboarding/views/onboarding_view.dart';
 import '../modules/splash/bindings/splash_binding.dart';
@@ -34,7 +32,6 @@ class AppPages {
     GetPage(
       name: AppRoutes.login,
       page: () => const LoginView(),
-      // AuthController est permanent, pas besoin de binding dédié
     ),
     GetPage(
       name: AppRoutes.register,
@@ -60,11 +57,6 @@ class AppPages {
       name: AppRoutes.notifications,
       page: () => const NotificationsView(),
       binding: NotificationsBinding(),
-    ),
-    GetPage(
-      name: AppRoutes.priceCheck,
-      page: () => const PriceCheckView(),
-      binding: PriceCheckBinding(),
     ),
   ];
 }

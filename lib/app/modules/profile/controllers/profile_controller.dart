@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
 import '../../../data/models/gamification_model.dart';
 import '../../../modules/auth/controllers/auth_controller.dart';
-import '../../../modules/report/controllers/report_controller.dart';
+import '../../../modules/verify/controllers/verify_controller.dart';
 import '../../../routes/app_routes.dart';
 import '../../../services/api_service.dart';
 import '../../../services/storage_service.dart';
@@ -74,7 +74,7 @@ class ProfileController extends GetxController {
   }
 
   Future<void> flushPendingReports() async {
-    await Get.find<ReportController>().flushOfflineQueue();
+    await Get.find<VerifyController>().flushOfflineQueue();
   }
 
   double get levelProgress {

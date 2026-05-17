@@ -4,7 +4,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../data/models/map_marker_model.dart';
 import '../../../../modules/main_nav/controllers/main_nav_controller.dart';
-import '../../../../modules/report/controllers/report_controller.dart';
+import '../../../../modules/verify/controllers/verify_controller.dart';
 
 class MapMarkerSheet extends StatelessWidget {
   final MapMarkerModel marker;
@@ -118,18 +118,18 @@ class MapMarkerSheet extends StatelessWidget {
   }
 
   void _launchReport() {
-    final reportCtrl = Get.find<ReportController>();
-    for (final product in reportCtrl.products) {
+    final verifyCtrl = Get.find<VerifyController>();
+    for (final product in verifyCtrl.filteredProducts) {
       for (final pkg in product.packagings) {
         if (pkg.id == marker.packagingId) {
-          reportCtrl.preSelect(product, pkg);
-          Get.find<MainNavController>().goToReport();
+          verifyCtrl.preSelect(product, pkg);
+          Get.find<MainNavController>().goToVerify();
           Get.back();
           return;
         }
       }
     }
-    Get.find<MainNavController>().goToReport();
+    Get.find<MainNavController>().goToVerify();
     Get.back();
   }
 }

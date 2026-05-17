@@ -1,66 +1,72 @@
 import 'dart:io';
-
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-
+import '../../../core/controllers/app_data_controller.dart';
 import '../../../core/utils/connectivity_util.dart';
 import '../../../data/models/gamification_model.dart';
 import '../../../data/models/official_price_model.dart';
-import '../../../data/models/price_history_model.dart';
 import '../../../data/models/price_summary_model.dart';
 import '../../../data/models/product_model.dart';
 import '../../../data/models/report_model.dart';
 import '../../../data/providers/offline_queue_model.dart';
 import '../../../modules/auth/controllers/auth_controller.dart';
-import '../../../modules/home/controllers/home_controller.dart';
-import '../../../modules/main_nav/controllers/main_nav_controller.dart';
 import '../../../services/api_service.dart';
 import '../../../services/storage_service.dart';
 
-class ReportController extends GetxController {
+class VerifyController extends GetxController {
   final _api = Get.find<ApiService>();
   final _storage = Get.find<StorageService>();
 
-  // ── Étapes ────────────────────────────────────────────────
-  final RxInt currentStep = 0.obs;
+  // ── Navigation interne ────────────────────────────────────
+  // 0 = recherche produit, 1 = sélection packaging, 2 = saisie prix + verdict
+  final RxInt currentScreen = 0.obs;
 
-  // ── Étape 1 : Produit ─────────────────────────────────────
-  final RxList<ProductModel> products = <ProductModel>[].obs;
+  // ── Produit / Packaging ───────────────────────────────────
   final RxString searchQuery = ''.obs;
   final Rx<ProductModel?> selectedProduct = Rx<ProductModel?>(null);
   final Rx<PackagingModel?> selectedPackaging = Rx<PackagingModel?>(null);
-  final RxBool productsLoading = false.obs;
+
+  // ── GPS ───────────────────────────────────────────────────
+  final RxDouble lat = 0.0.obs;
+  final RxDouble lng = 0.0.obs;
+  final RxBool hasLocation = false.obs;
+  final RxBool isLocating = false.obs;
+
+  // ── Prix ──────────────────────────────────────────────────
+  final RxDouble observedPrice = 0.0.obs;
+
+  // ── Mini-flux post-verdict ────────────────────────────────
+  final RxString shopName = ''.obs;
+  final Rx<File?> photo = Rx<File?>(null);
+
+  // ── Résumé communautaire (auto-type SIGNALEMENT/CONFIRMATION) ─
+  final Rx<PriceSummaryModel?> priceSummary = Rx<PriceSummaryModel?>(null);
+  final RxBool loadingSummary = false.obs;
+
+  // ── Résultat soumission ───────────────────────────────────
+  final Rx<ReportModel?> submissionResult = Rx<ReportModel?>(null);
+  final RxBool isSubmitting = false.obs;
+
+  // ── Getters vers AppDataController (réactifs via Obx) ────
+  RxList<ProductModel> get _allProducts => Get.find<AppDataController>().products;
+  RxBool get productsLoading => Get.find<AppDataController>().productsLoading;
 
   List<ProductModel> get filteredProducts {
     final q = searchQuery.value.toLowerCase();
-    if (q.isEmpty) return products;
-    return products
+    if (q.isEmpty) return _allProducts;
+    return _allProducts
         .where((p) =>
             p.name.toLowerCase().contains(q) ||
             p.category.toLowerCase().contains(q))
         .toList();
   }
 
-  // ── Étape 2 : Prix + photo ────────────────────────────────
-  final RxDouble observedPrice = 0.0.obs;
-  final Rx<File?> photo = Rx<File?>(null);
-
-  // ── Étape 3 : Localisation + enseigne + type ──────────────
-  final RxDouble lat = 0.0.obs;
-  final RxDouble lng = 0.0.obs;
-  final RxBool hasLocation = false.obs;
-  final RxBool isLocating = false.obs;
-  final RxBool isSubmitting = false.obs;
-  final RxString shopName = ''.obs;
-  final RxString reportType = 'SIGNALEMENT'.obs; // 'SIGNALEMENT' | 'CONFIRMATION'
-
-  // ── Prix plafond officiel (sans GPS) ─────────────────────
   OfficialPriceModel? get officialPrice {
     final pkg = selectedPackaging.value;
     if (pkg == null) return null;
     try {
-      return Get.find<HomeController>()
+      return Get.find<AppDataController>()
           .officialPrices
           .firstWhere((p) => p.packagingId == pkg.id);
     } catch (_) {
@@ -71,127 +77,91 @@ class ReportController extends GetxController {
   double? get effectiveMaxPrice =>
       officialPrice?.maxPrice ?? priceSummary.value?.officialMaxPrice;
 
-  // ── Résumé des prix locaux ────────────────────────────────
-  final Rx<PriceSummaryModel?> priceSummary = Rx<PriceSummaryModel?>(null);
-  final RxBool loadingSummary = false.obs;
-  final RxList<PriceHistoryEntry> priceHistory = <PriceHistoryEntry>[].obs;
-  final RxBool loadingHistory = false.obs;
+  /// Verdict local (avant soumission) — binaire : ABUS ou CONFORME.
+  /// Le serveur détermine LIMITE vs ABUS à la soumission.
+  String? get localVerdict {
+    final price = observedPrice.value;
+    final max = effectiveMaxPrice;
+    if (price <= 0 || max == null || max <= 0) return null;
+    return price > max ? 'ABUS' : 'CONFORME';
+  }
 
-  // ── Résultat ──────────────────────────────────────────────
-  final Rx<ReportModel?> submissionResult = Rx<ReportModel?>(null);
+  String get reportType =>
+      (priceSummary.value?.count ?? 0) > 0 ? 'CONFIRMATION' : 'SIGNALEMENT';
 
   @override
   void onInit() {
     super.onInit();
-    _loadProducts();
-    flushOfflineQueue();
-    // Déclenche le fetch du résumé dès qu'un packaging est sélectionné
     ever(selectedPackaging, (_) {
       priceSummary.value = null;
-      priceHistory.value = [];
       if (hasLocation.value && selectedPackaging.value != null) {
         _fetchPriceSummary();
-        fetchPriceHistory();
       }
     });
-    // Déclenche le fetch si le GPS arrive après la sélection du packaging
     ever(hasLocation, (_) {
       if (hasLocation.value && selectedPackaging.value != null) {
         _fetchPriceSummary();
-        fetchPriceHistory();
       }
-    });
-    // Type auto-déterminé à partir du résumé communautaire
-    ever(priceSummary, (_) {
-      reportType.value =
-          (priceSummary.value?.count ?? 0) > 0 ? 'CONFIRMATION' : 'SIGNALEMENT';
     });
   }
 
-  Future<void> _loadProducts() async {
-    productsLoading.value = true;
-    try {
-      final res = await _api.getProducts();
-      if (res.isOk) {
-        products.value = (res.body['products'] as List)
-            .map((p) => ProductModel.fromJson(p as Map<String, dynamic>))
-            .toList();
-      }
-    } finally {
-      productsLoading.value = false;
-    }
-  }
+  // ── Navigation ────────────────────────────────────────────
 
   void selectProduct(ProductModel product) {
     selectedProduct.value = product;
     selectedPackaging.value = null;
-    // Démarrer le GPS tôt pour avoir le résumé dès le bottom sheet
+    observedPrice.value = 0;
+    photo.value = null;
+    shopName.value = '';
+    submissionResult.value = null;
+    priceSummary.value = null;
     if (!hasLocation.value && !isLocating.value) locateUser();
+    currentScreen.value = 1;
   }
 
   void selectPackaging(PackagingModel packaging) {
     selectedPackaging.value = packaging;
   }
 
-  /// Passe à l'étape [step]. Lance la localisation silencieusement
-  /// quand l'utilisateur entre l'étape 2 (prix) pour que le GPS
-  /// soit prêt à l'étape 3 sans bloquer.
-  void goToStep(int step) {
-    currentStep.value = step;
-    if (step == 1 && !hasLocation.value && !isLocating.value) {
-      locateUser();
-    }
+  void goToScreen(int screen) => currentScreen.value = screen;
+
+  void goBack() {
+    if (currentScreen.value > 0) currentScreen.value--;
   }
 
-  Future<void> pickPhoto() async {
-    final picked = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 75,
-    );
-    if (picked != null) photo.value = File(picked.path);
+  /// Pré-remplit depuis un marqueur carte et saute à l'écran prix.
+  void preSelect(ProductModel product, PackagingModel packaging) {
+    resetFlow();
+    selectedProduct.value = product;
+    selectedPackaging.value = packaging;
+    if (!hasLocation.value && !isLocating.value) locateUser();
+    currentScreen.value = 2;
   }
 
-  Future<void> takePhoto() async {
-    final picked = await ImagePicker().pickImage(
-      source: ImageSource.camera,
-      imageQuality: 75,
-    );
-    if (picked != null) photo.value = File(picked.path);
-  }
+  // ── GPS ───────────────────────────────────────────────────
 
   Future<void> locateUser() async {
     isLocating.value = true;
     try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        Get.snackbar('GPS', 'Le service de localisation est désactivé.',
-            snackPosition: SnackPosition.BOTTOM);
-        return;
-      }
+      if (!await Geolocator.isLocationServiceEnabled()) return;
       var permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
       }
-      if (permission == LocationPermission.deniedForever) {
-        Get.snackbar('Localisation',
-            'Autorisation refusée. Activez-la dans les réglages.',
-            snackPosition: SnackPosition.BOTTOM);
-        return;
-      }
+      if (permission == LocationPermission.deniedForever) return;
       final pos = await Geolocator.getCurrentPosition(
-        locationSettings:
-            const LocationSettings(accuracy: LocationAccuracy.high),
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
       );
       lat.value = pos.latitude;
       lng.value = pos.longitude;
       hasLocation.value = true;
-    } catch (e) {
-      Get.snackbar('GPS', 'Impossible d\'obtenir la position.',
-          snackPosition: SnackPosition.BOTTOM);
+    } catch (_) {
     } finally {
       isLocating.value = false;
     }
   }
+
+  // ── Résumé communautaire ──────────────────────────────────
 
   Future<void> _fetchPriceSummary() async {
     final pkg = selectedPackaging.value;
@@ -212,31 +182,24 @@ class ReportController extends GetxController {
     }
   }
 
-  Future<void> fetchPriceHistory() async {
-    final pkg = selectedPackaging.value;
-    if (pkg == null || !hasLocation.value) return;
-    loadingHistory.value = true;
-    try {
-      final res = await _api.getPriceHistory(
-        packagingId: pkg.id,
-        lat: lat.value,
-        lng: lng.value,
-      );
-      if (res.isOk) {
-        priceHistory.value = (res.body['history'] as List)
-            .map((e) => PriceHistoryEntry.fromJson(e as Map<String, dynamic>))
-            .toList();
-      }
-    } finally {
-      loadingHistory.value = false;
-    }
+  // ── Photo ─────────────────────────────────────────────────
+
+  Future<void> pickPhoto() async {
+    final picked = await ImagePicker()
+        .pickImage(source: ImageSource.gallery, imageQuality: 75);
+    if (picked != null) photo.value = File(picked.path);
   }
 
-  Future<void> submitReport() async {
-    if (selectedPackaging.value == null || observedPrice.value <= 0) {
-      return;
-    }
+  Future<void> takePhoto() async {
+    final picked = await ImagePicker()
+        .pickImage(source: ImageSource.camera, imageQuality: 75);
+    if (picked != null) photo.value = File(picked.path);
+  }
 
+  // ── Soumission ────────────────────────────────────────────
+
+  Future<void> submitReport() async {
+    if (selectedPackaging.value == null || observedPrice.value <= 0) return;
     isSubmitting.value = true;
     final online = await ConnectivityUtil.isOnline();
 
@@ -248,7 +211,7 @@ class ReportController extends GetxController {
         'Signalement sauvegardé. Il sera envoyé dès la reconnexion.',
         snackPosition: SnackPosition.BOTTOM,
       );
-      resetWizard();
+      resetFlow();
       return;
     }
 
@@ -257,7 +220,7 @@ class ReportController extends GetxController {
       final fields = {
         'packagingId': selectedPackaging.value!.id,
         'observedPrice': observedPrice.value.toStringAsFixed(0),
-        'type': reportType.value,
+        'type': reportType,
         if (hasLocation.value) 'lat': lat.value.toString(),
         if (hasLocation.value) 'lng': lng.value.toString(),
         if (shop.isNotEmpty) 'shopName': shop,
@@ -270,7 +233,7 @@ class ReportController extends GetxController {
         res = await _api.createReport({
           'packagingId': selectedPackaging.value!.id,
           'observedPrice': observedPrice.value,
-          'type': reportType.value,
+          'type': reportType,
           if (hasLocation.value) 'lat': lat.value,
           if (hasLocation.value) 'lng': lng.value,
           if (shop.isNotEmpty) 'shopName': shop,
@@ -332,7 +295,7 @@ class ReportController extends GetxController {
     if (remaining.length < list.length) {
       Get.snackbar(
         'Signalements envoyés',
-        '${list.length - remaining.length} signalement(s) en attente envoyé(s) avec succès.',
+        '${list.length - remaining.length} signalement(s) envoyé(s) avec succès.',
         snackPosition: SnackPosition.BOTTOM,
         duration: const Duration(seconds: 4),
       );
@@ -347,48 +310,18 @@ class ReportController extends GetxController {
     }
   }
 
-  /// Pré-remplit le wizard depuis PriceCheck.
-  /// - Avec [observedPrice] : saute à l'étape 3 (GPS + envoi) — tout est rempli.
-  /// - Sans [observedPrice] : saute à l'étape 2 (saisie du prix).
-  void preSelect(
-    ProductModel product,
-    PackagingModel packaging, {
-    String type = 'CONFIRMATION',
-    double? observedPrice,
-  }) {
-    resetWizard();
-    selectedProduct.value = product;
-    selectedPackaging.value = packaging;
-    reportType.value = type;
-    if (!hasLocation.value && !isLocating.value) locateUser();
-    if (observedPrice != null && observedPrice > 0) {
-      this.observedPrice.value = observedPrice;
-      currentStep.value = 2; // saute directement à l'étape 3 (GPS + envoi)
-    } else {
-      currentStep.value = 1; // saute à l'étape 2 (saisie du prix)
-    }
-  }
-
-  /// Réinitialise le wizard et navigue vers la carte
-  void viewOnMap() {
-    resetWizard();
-    Get.find<MainNavController>().goToMap();
-  }
-
-  void resetWizard() {
-    currentStep.value = 0;
+  void resetFlow() {
+    currentScreen.value = 0;
     selectedProduct.value = null;
     selectedPackaging.value = null;
     observedPrice.value = 0;
     photo.value = null;
+    shopName.value = '';
+    submissionResult.value = null;
+    priceSummary.value = null;
+    searchQuery.value = '';
     hasLocation.value = false;
     lat.value = 0;
     lng.value = 0;
-    shopName.value = '';
-    submissionResult.value = null;
-    searchQuery.value = '';
-    reportType.value = 'SIGNALEMENT';
-    priceSummary.value = null;
-    priceHistory.value = [];
   }
 }
