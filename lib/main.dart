@@ -22,16 +22,16 @@ void main() async {
   };
   await Get.putAsync(() => StorageService().init());
   Get.put(ConnectivityService(), permanent: true);
-  runApp(const PrixKloApp());
+  runApp(const PricloApp());
 }
 
-class PrixKloApp extends StatelessWidget {
-  const PrixKloApp({super.key});
+class PricloApp extends StatelessWidget {
+  const PricloApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'PrixKlo',
+      title: 'Priclo',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       initialRoute: AppRoutes.splash,

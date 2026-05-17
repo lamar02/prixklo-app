@@ -38,7 +38,7 @@ class _RegisterViewState extends State<RegisterView> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Rejoins PrixKlo 🌍',
+                'Rejoins Priclo 🌍',
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.w800,

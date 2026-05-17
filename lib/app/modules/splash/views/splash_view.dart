@@ -25,7 +25,7 @@ class SplashView extends GetView<SplashController> {
             ),
             const SizedBox(height: 24),
             Text(
-              'PrixKlo',
+              'Priclo',
               style: GoogleFonts.dmSans(
                 fontSize: 34,
                 fontWeight: FontWeight.w800,
