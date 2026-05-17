@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 abstract class AppColors {
-  static const primary = Color(0xFFDC2F02);
-  static const primaryDark = Color(0xFFBF2902);
-  static const secondary = Color(0xFF1E3A5F); // Navy
+  static const primary = Color(0xFFF7374F);
+  static const primaryDark = Color(0xFFD42D43);
+  static const secondary = Color(0xFF000000);
   static const background = Color(0xFFF8F9FA);
   static const surface = Color(0xFFFFFFFF);
   static const error = Color(0xFFDC2626);

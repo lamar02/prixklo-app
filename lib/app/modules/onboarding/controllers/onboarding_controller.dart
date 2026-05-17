@@ -28,14 +28,14 @@ class OnboardingController extends GetxController {
       subtitle:
           'Scannez le prix d\'un produit, comparez avec le plafond officiel et sachez immédiatement si vous payez trop cher.',
       emoji: '🔍',
-      color: Color(0xFFDC2F02),
+      color: Color(0xFFF7374F),
     ),
     OnboardingPage(
       title: 'Signalez les abus\nen 30 secondes',
       subtitle:
           'Un prix trop élevé ? Entrez le montant, confirmez votre position, envoyez. Votre signalement protège tout votre quartier.',
       emoji: '🚨',
-      color: Color(0xFF1E3A5F),
+      color: Color(0xFF000000),
     ),
     OnboardingPage(
       title: 'Ensemble,\non change les prix',
