@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../data/models/product_model.dart';
+import '../../../../modules/auth/controllers/auth_controller.dart';
 import '../../../../modules/notifications/controllers/notifications_controller.dart';
 import '../../../../routes/app_routes.dart';
 import '../../controllers/verify_controller.dart';
@@ -14,33 +15,120 @@ class Screen1Search extends GetView<VerifyController> {
     return SafeArea(
       child: Column(
         children: [
-          // ── AppBar manuel (pas de back) ───────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 8, 0),
-            child: Row(
+          // ── Header ───────────────────────────────────────
+          Container(
+            color: AppColors.surface,
+            padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+            child: Column(
               children: [
-                const Expanded(
-                  child: Text(
-                    'Vérifier un prix',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.neutral100,
+                // Ligne 1 : logo + cloche
+                Row(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.asset(
+                        'assets/logo/app_icon.png',
+                        width: 36,
+                        height: 36,
+                        fit: BoxFit.cover,
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Priclo',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primary,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    const Spacer(),
+                    Obx(() {
+                      final notifCtrl = Get.find<NotificationsController>();
+                      final count = notifCtrl.unreadCount;
+                      return IconButton(
+                        onPressed: () =>
+                            Get.toNamed(AppRoutes.notifications),
+                        icon: Badge(
+                          isLabelVisible: count > 0,
+                          label: Text(count > 9 ? '9+' : '$count'),
+                          child: const Icon(Icons.notifications_outlined),
+                        ),
+                      );
+                    }),
+                  ],
                 ),
-                Obx(() {
-                  final notifCtrl = Get.find<NotificationsController>();
-                  final count = notifCtrl.unreadCount;
-                  return IconButton(
-                    onPressed: () => Get.toNamed(AppRoutes.notifications),
-                    icon: Badge(
-                      isLabelVisible: count > 0,
-                      label: Text(count > 9 ? '9+' : '$count'),
-                      child: const Icon(Icons.notifications_outlined),
+                const SizedBox(height: 14),
+                // Ligne 2 : salutation + avatar
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Obx(() {
+                        final user =
+                            Get.find<AuthController>().user.value;
+                        final firstName =
+                            user?.name.split(' ').first ?? 'Citoyen';
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Bonjour, $firstName 👋',
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.neutral100,
+                                height: 1.1,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            const Text(
+                              'Vérifiez les prix autour de vous',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.neutral60,
+                              ),
+                            ),
+                          ],
+                        );
+                      }),
                     ),
-                  );
-                }),
+                    const SizedBox(width: 12),
+                    // Avatar initiale
+                    Obx(() {
+                      final name =
+                          Get.find<AuthController>().user.value?.name ?? '';
+                      return Container(
+                        width: 46,
+                        height: 46,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [
+                              AppColors.primary,
+                              AppColors.primaryDark
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            name.isNotEmpty
+                                ? name[0].toUpperCase()
+                                : '?',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 20,
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ],
+                ),
               ],
             ),
           ),
