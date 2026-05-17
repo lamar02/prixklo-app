@@ -9,6 +9,7 @@ class StorageService extends GetxService {
   static const _pendingReportsKey = 'pending_reports';
   static const _officialPricesKey = 'official_prices_json';
   static const _bulletinIdKey = 'cached_bulletin_id';
+  static const _fcmPermissionKey = 'fcm_permission_asked';
 
   /// Nombre de signalements en attente d'envoi (observable)
   final RxInt pendingCount = 0.obs;
@@ -46,4 +47,9 @@ class StorageService extends GetxService {
 
   Future<void> cacheBulletinId(String id) =>
       _prefs.setString(_bulletinIdKey, id);
+
+  // Permission FCM — demandée une seule fois après le premier signalement réussi
+  bool get fcmPermissionAsked => _prefs.getBool(_fcmPermissionKey) ?? false;
+  Future<void> markFcmPermissionAsked() =>
+      _prefs.setBool(_fcmPermissionKey, true);
 }

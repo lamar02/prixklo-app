@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -245,6 +247,7 @@ class VerifyController extends GetxController {
             ReportModel.fromJson(res.body['report'] as Map<String, dynamic>);
         submissionResult.value = report;
         _refreshUserPoints();
+        _requestFcmIfNeeded();
         flushOfflineQueue();
       } else {
         Get.snackbar('Erreur', 'Envoi échoué. Réessayez.',
@@ -308,6 +311,40 @@ class VerifyController extends GetxController {
       final g = GamificationModel.fromJson(res.body as Map<String, dynamic>);
       Get.find<AuthController>().updatePoints(g.points, g.level);
     }
+  }
+
+  Future<void> _requestFcmIfNeeded() async {
+    if (_storage.fcmPermissionAsked) return;
+
+    final confirmed = await Get.dialog<bool>(
+      AlertDialog(
+        title: const Text('Restez alerté'),
+        content: const Text(
+          "Activez les notifications pour être prévenu dès qu'un abus de prix est signalé près de chez vous.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('Plus tard'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(minimumSize: Size.zero),
+            onPressed: () => Get.back(result: true),
+            child: const Text('Activer'),
+          ),
+        ],
+      ),
+      barrierDismissible: false,
+    );
+
+    await _storage.markFcmPermissionAsked();
+    if (confirmed != true) return;
+
+    await FirebaseMessaging.instance.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
   }
 
   void resetFlow() {

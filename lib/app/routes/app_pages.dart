@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 
+import '../modules/auth/views/forgot_password_view.dart';
 import '../modules/auth/views/login_view.dart';
 import '../modules/auth/views/register_view.dart';
 import '../modules/history/bindings/history_binding.dart';
@@ -57,6 +58,10 @@ class AppPages {
       name: AppRoutes.notifications,
       page: () => const NotificationsView(),
       binding: NotificationsBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.forgotPassword,
+      page: () => const ForgotPasswordView(),
     ),
   ];
 }

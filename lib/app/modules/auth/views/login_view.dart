@@ -87,7 +87,17 @@ class _LoginViewState extends State<LoginView> {
                           )
                         : const Text('Se connecter'),
                   )),
-              const SizedBox(height: 24),
+              const SizedBox(height: 12),
+              Center(
+                child: TextButton(
+                  onPressed: () => Get.toNamed(AppRoutes.forgotPassword),
+                  child: const Text(
+                    'Mot de passe oublié ?',
+                    style: TextStyle(color: AppColors.neutral60),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

@@ -37,6 +37,9 @@ class ApiService extends GetConnect {
   Future<Response> login(String email, String password) =>
       post('/auth/login', {'email': email, 'password': password});
 
+  Future<Response> forgotPassword(String email) =>
+      post('/auth/forgot-password', {'email': email});
+
   Future<Response> getMe() => get('/auth/me');
 
   // ── Catalogue ────────────────────────────────────────────

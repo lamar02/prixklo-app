@@ -7,4 +7,5 @@ abstract class AppRoutes {
   static const history = '/history';
   static const leaderboard = '/leaderboard';
   static const notifications = '/notifications';
+  static const forgotPassword = '/forgot-password';
 }
