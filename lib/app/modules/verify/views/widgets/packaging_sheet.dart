@@ -84,11 +84,25 @@ class PackagingSheet extends GetView<VerifyController> {
           // Official price card (only when packaging selected)
           Obx(() {
             final pkg = controller.selectedPackaging.value;
-            if (pkg == null) return const SizedBox.shrink();
-            final maxPrice = controller.effectiveMaxPrice;
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-              child: Container(
+            final maxPrice = pkg != null ? controller.effectiveMaxPrice : null;
+            return AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              transitionBuilder: (child, anim) => FadeTransition(
+                opacity: anim,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, 0.12),
+                    end: Offset.zero,
+                  ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOut)),
+                  child: child,
+                ),
+              ),
+              child: pkg == null
+                  ? const SizedBox.shrink(key: ValueKey('none'))
+                  : Padding(
+                      key: ValueKey(pkg.id),
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                      child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
@@ -135,6 +149,7 @@ class PackagingSheet extends GetView<VerifyController> {
                   ],
                 ),
               ),
+                    ),
             );
           }),
           const SizedBox(height: 20),

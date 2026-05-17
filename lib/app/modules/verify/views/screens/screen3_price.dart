@@ -183,45 +183,67 @@ class _Screen3PriceState extends State<Screen3Price> {
             // ── Bannière verdict temps réel ─────────────────
             Obx(() {
               final verdict = controller.localVerdict;
-              if (verdict == null) return const SizedBox.shrink();
-              final max = controller.effectiveMaxPrice!;
+              final max = verdict != null ? controller.effectiveMaxPrice : null;
               final price = controller.observedPrice.value;
-              final isAbus = verdict == 'ABUS';
-              final diff = (price - max).abs();
-              final pct = ((diff / max) * 100).toStringAsFixed(0);
-              final color = isAbus ? AppColors.abus : AppColors.success;
-              return Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                decoration: BoxDecoration(
-                  color: color.withAlpha(18),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: color.withAlpha(60)),
+              return AnimatedSwitcher(
+                duration: const Duration(milliseconds: 320),
+                transitionBuilder: (child, anim) => FadeTransition(
+                  opacity: anim,
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0, 0.15),
+                      end: Offset.zero,
+                    ).animate(CurvedAnimation(
+                        parent: anim, curve: Curves.easeOut)),
+                    child: child,
+                  ),
                 ),
-                child: Row(
-                  children: [
-                    Icon(
-                      isAbus
-                          ? Icons.warning_rounded
-                          : Icons.check_circle_rounded,
-                      color: color,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        isAbus
-                            ? '🚨 +$pct% au-dessus du plafond'
-                            : '✅ Dans la limite du plafond',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: color,
-                          fontWeight: FontWeight.w600,
-                        ),
+                child: verdict == null || max == null
+                    ? const SizedBox.shrink(key: ValueKey('none'))
+                    : Builder(
+                        key: ValueKey(verdict),
+                        builder: (_) {
+                          final isAbus = verdict == 'ABUS';
+                          final diff = (price - max).abs();
+                          final pct = ((diff / max) * 100).toStringAsFixed(0);
+                          final color =
+                              isAbus ? AppColors.abus : AppColors.success;
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: color.withAlpha(18),
+                              borderRadius: BorderRadius.circular(10),
+                              border:
+                                  Border.all(color: color.withAlpha(60)),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  isAbus
+                                      ? Icons.warning_rounded
+                                      : Icons.check_circle_rounded,
+                                  color: color,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    isAbus
+                                        ? '🚨 +$pct% au-dessus du plafond'
+                                        : '✅ Dans la limite du plafond',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: color,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
                       ),
-                    ),
-                  ],
-                ),
               );
             }),
             const SizedBox(height: 32),
@@ -235,12 +257,17 @@ class _Screen3PriceState extends State<Screen3Price> {
                   : 'Confirmer ce prix  ·  +5 pts';
               final color = isAbus ? AppColors.abus : AppColors.success;
 
-              return SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: color),
-                  onPressed: active ? _showMiniFlux : null,
-                  child: Text(label),
+              return AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                child: SizedBox(
+                  key: ValueKey(verdict),
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: active ? color : null),
+                    onPressed: active ? _showMiniFlux : null,
+                    child: Text(label),
+                  ),
                 ),
               );
             }),

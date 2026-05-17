@@ -16,14 +16,18 @@ class _VerifyResultScreenState extends State<VerifyResultScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _anim;
   late final Animation<double> _scale;
+  late final Animation<double> _fade;
 
   @override
   void initState() {
     super.initState();
     _anim = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 600));
+        vsync: this, duration: const Duration(milliseconds: 700));
     _scale = CurvedAnimation(parent: _anim, curve: Curves.elasticOut);
     _anim.forward();
+    _fade = CurvedAnimation(
+        parent: _anim,
+        curve: const Interval(0.3, 1.0, curve: Curves.easeOut));
   }
 
   @override
@@ -72,84 +76,93 @@ class _VerifyResultScreenState extends State<VerifyResultScreen>
                 ),
               ),
               const SizedBox(height: 24),
-              Text(
-                displayLabel,
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w800,
-                  color: color,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 10),
-              Text(
-                '${r.productName} — ${r.packagingLabel}',
-                style: const TextStyle(fontSize: 15, color: AppColors.neutral60),
-                textAlign: TextAlign.center,
-              ),
-              if (r.shopName != null && r.shopName!.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Text(
-                  r.shopName!,
-                  style: const TextStyle(fontSize: 13, color: AppColors.neutral60),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _PricePill(
-                    label: 'Observé',
-                    value: '${r.observedPrice.toStringAsFixed(0)} FCFA',
-                    color: color,
-                  ),
-                  if (r.maxPrice != null) ...[
-                    const SizedBox(width: 12),
-                    _PricePill(
-                      label: 'Max officiel',
-                      value: '${r.maxPrice!.toStringAsFixed(0)} FCFA',
-                      color: AppColors.neutral60,
-                    ),
-                  ],
-                ],
-              ),
-              const SizedBox(height: 32),
-              // Points gagnés
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppColors.primary, AppColors.primaryDark],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+              FadeTransition(
+                opacity: _fade,
+                child: Column(
                   children: [
-                    const Text('⭐', style: TextStyle(fontSize: 22)),
-                    const SizedBox(width: 8),
                     Text(
-                      '$displayPoints gagnés !',
+                      displayLabel,
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w800,
+                        color: color,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      '${r.productName} — ${r.packagingLabel}',
                       style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
+                          fontSize: 15, color: AppColors.neutral60),
+                      textAlign: TextAlign.center,
+                    ),
+                    if (r.shopName != null && r.shopName!.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        r.shopName!,
+                        style: const TextStyle(
+                            fontSize: 13, color: AppColors.neutral60),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _PricePill(
+                          label: 'Observé',
+                          value: '${r.observedPrice.toStringAsFixed(0)} FCFA',
+                          color: color,
+                        ),
+                        if (r.maxPrice != null) ...[
+                          const SizedBox(width: 12),
+                          _PricePill(
+                            label: 'Max officiel',
+                            value:
+                                '${r.maxPrice!.toStringAsFixed(0)} FCFA',
+                            color: AppColors.neutral60,
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [AppColors.primary, AppColors.primaryDark],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text('⭐', style: TextStyle(fontSize: 22)),
+                          const SizedBox(width: 8),
+                          Text(
+                            '$displayPoints gagnés !',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
+                    const SizedBox(height: 32),
+                    ElevatedButton(
+                      onPressed: Get.find<VerifyController>().resetFlow,
+                      child: const Text('Nouveau signalement'),
+                    ),
+                    const SizedBox(height: 10),
+                    OutlinedButton(
+                      onPressed: Get.find<VerifyController>().resetFlow,
+                      child: const Text('Fermer'),
+                    ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: Get.find<VerifyController>().resetFlow,
-                child: const Text('Nouveau signalement'),
-              ),
-              const SizedBox(height: 10),
-              OutlinedButton(
-                onPressed: Get.find<VerifyController>().resetFlow,
-                child: const Text('Fermer'),
               ),
             ],
           ),

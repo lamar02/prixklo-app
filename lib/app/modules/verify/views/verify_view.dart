@@ -19,12 +19,23 @@ class VerifyView extends GetView<VerifyController> {
 
       return Scaffold(
         backgroundColor: AppColors.background,
-        body: IndexedStack(
-          index: controller.currentScreen.value,
-          children: const [
-            Screen1Search(),
-            Screen3Price(),
-          ],
+        body: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 280),
+          transitionBuilder: (child, anim) => FadeTransition(
+            opacity: anim,
+            child: child,
+          ),
+          layoutBuilder: (currentChild, previousChildren) => Stack(
+            fit: StackFit.expand,
+            alignment: Alignment.topCenter,
+            children: [
+              ...previousChildren,
+              ?currentChild,
+            ],
+          ),
+          child: controller.currentScreen.value == 0
+              ? const Screen1Search(key: ValueKey(0))
+              : const Screen3Price(key: ValueKey(1)),
         ),
       );
     });

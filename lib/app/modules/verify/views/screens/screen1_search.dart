@@ -182,7 +182,8 @@ class _ProductTile extends StatelessWidget {
     return Obx(() {
       final selected = ctrl.selectedProduct.value?.id == product.id;
       return ListTile(
-        leading: Container(
+        leading: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
           width: 40,
           height: 40,
           decoration: BoxDecoration(
