@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../controllers/verify_controller.dart';
 import '../widgets/mini_flux_sheet.dart';
@@ -152,6 +153,21 @@ class _Screen3PriceState extends State<Screen3Price> {
                         'Ne devrait pas dépasser ce montant',
                         style:
                             TextStyle(fontSize: 11, color: AppColors.neutral60),
+                      ),
+                      const SizedBox(height: 4),
+                      GestureDetector(
+                        onTap: () => launchUrl(
+                          Uri.parse('https://www.commerce.gouv.ci/'),
+                          mode: LaunchMode.externalApplication,
+                        ),
+                        child: const Text(
+                          'Source : Ministère du Commerce, CI ↗',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: AppColors.primary,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
                       ),
                     ],
                   ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../data/models/report_model.dart';
 import '../../controllers/verify_controller.dart';
@@ -124,6 +125,27 @@ class _VerifyResultScreenState extends State<VerifyResultScreen>
                           ),
                         ],
                       ],
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'PrixKlo n\'est pas une application officielle du gouvernement.',
+                      style: TextStyle(fontSize: 11, color: AppColors.neutral60),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 2),
+                    GestureDetector(
+                      onTap: () => launchUrl(
+                        Uri.parse('https://www.commerce.gouv.ci/'),
+                        mode: LaunchMode.externalApplication,
+                      ),
+                      child: const Text(
+                        'Source : Ministère du Commerce, CI ↗',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.primary,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 32),
                     Container(
